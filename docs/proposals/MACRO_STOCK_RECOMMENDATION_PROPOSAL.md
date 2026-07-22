@@ -1,167 +1,135 @@
 # 📈 [StockLatte] 올인원 거시경제·재무제표·CapEx·자원수급·정책·환율·비정형 리스크 모니터링 기반 미국 주식 추천 시스템 상세 설계서
 
-> **작성일자:** 2026년 7월 22일 (기업 재무제표·펀더멘털·밸류에이션 파이프라인 최종 완비)  
+> **작성일자:** 2026년 7월 22일 (5단계 하이브리드 종목 스크리닝 & 추리기 알고리즘 최종 완비)  
 > **작성자:** 글로벌 미국 주식 수석 트레이더 & AI 시스템 아키텍트  
-> **문서 목적:** 거시지표/지정학/CapEx뿐만 아니라 **개별 기업 재무제표(손익계산서, 재무상태표, 현금흐름표), 잉여현금흐름(FCF), 부채비율, 밸류에이션(PER/PBR/PSR), 전방 B2B 수요, 자원 수급, 환율, 신용스프레드** 등 기업 펀더멘털과 주가를 결정짓는 모든 지표를 실시간 수집하여, LLM이 **"미국 주식 매수/매도 시나리오"**를 입체적으로 도출하는 완벽한 올인원 자동화 서비스 구축  
+> **문서 목적:** 수천 개 미국 주식 중 9대 다차원 지표(거시경제, 지정학, 자원 수급, B2B CapEx, 재무제표, 환율 등)를 활용해 **부실주 제거 $\rightarrow$ 거시 수혜 섹터 도출 $\rightarrow$ 퀀트 펀더멘털 스코어링 $\rightarrow$ LLM 딥 맥락 매칭 $\rightarrow$ 최종 3~5개 매수/매도 종목 확정**에 이르는 정밀 종목 추리기(Screening & Filtering) 시스템 구축  
 
 ---
 
 ## 1. 🎯 프로젝트 개요 및 배경
 
 ### 1.1 배경 및 문제 정의
-* **기업 재무제표 및 펀더멘털의 필수성 (Financial Statements & Fundamental Analysis):** 아무리 거시경제 호재나 AI/지정학 테마가 불어오더라도, **부채비율이 과도하여 파산 위험이 있거나, 잉여현금흐름(FCF)이 적자이거나, P/E(PER) 밸류에이션이 극단적 과열 상태인 기업**을 매수하면 대형 손실로 이어집니다.
-* **초보 투자자의 한계:** 개인이 SEC 공시(10-Q/10-K) 및 재무제표 3대 항목(손익계산서, 재무상태표, 현금흐름표)을 해석하고, PER/PBR/FCF/영업이익률을 거시 지표와 결합하여 적정 주가를 판단하는 것은 매우 어렵습니다.
-* **LLM 판단력의 완전성 (Completeness of LLM Input):** 개별 기업의 **재무 펀더멘털 건전성(부채비율 < 100%, FCF 양수, 영업이익률 개선)** 데이터가 주입되어야만 LLM이 부실주를 스크리닝하고 안전하고 확실한 우량주만을 추천할 수 있습니다.
-* **해결책:** 100% 무료 데이터 원천(`yfinance`, `SEC EDGAR API`)을 활용해 재무제표 및 밸류에이션 지표를 정제하여 **All-in-One Context Matrix**로 구축합니다.
+* **수천 개 미국 주식 중에서 종목을 추리는 문제 (Stock Screening Problem):** 미국 주식 시장(NYSE, NASDAQ 등)에는 6,000개 이상의 상장 종목이 존재합니다. 매일 쏟아지는 글로벌 뉴스, 환율, 금리, 자원 수급, 기업 재무제표 데이터를 수집하더라도 **"어떻게 단계적으로 필터링하여 당장 돈이 되는 최종 3~5개 종목으로 압축할 것인가?"**가 핵심 과제입니다.
+* **초보 투자자의 한계:** 일반 투자자는 어떤 주식을 걸러내야 할지(부실주), 지금 거시 환경(유가, 금리, 무역제재)에서 어떤 섹터가 주도주인지, 밸류에이션과 재무제표가 우수한 기업 중 LLM이 분석한 진짜 수혜주가 무엇인지 판단하기 어렵습니다.
+* **해결책:** 전문 트레이더의 **"5단계 하이브리드 종목 스크리닝 파이프라인 (5-Stage Quant-Macro Screening Pipeline)"**을 구축하여 하드 필터링부터 LLM 딥 분석까지 자동 추리기를 완성합니다.
 
 ---
 
-## 2. 🧠 전문 트레이더 관점의 9대 종합 분석 레이어 (All-in-One Multi-Layer Approach)
+## 2. 🎯 5단계 하이브리드 종목 스크리닝 파이프라인 (Stock Screening Pipeline)
+
+미국 상장 6,000여 개 종목을 9대 종합 지표를 이용해 단계적으로 추려내는 알고리즘 파이프라인입니다.
 
 ```mermaid
 flowchart TD
-    A[1. 개별 기업 재무제표 & 펀더멘털 (yfinance, SEC EDGAR: PER, FCF, 부채비율)] --> J[LLM All-in-One Context Matrix]
-    B[2. 전방 B2B 수요 & 기업 CapEx (SEC EDGAR, 건설지출, ISM 신규수주)] --> J
-    C[3. 자원 수급/생산량/수출입 (EIA, USGS, USDA, LME)] --> J
-    D[4. 성장/인플레/정책 (GDP, M2, PCE, 국채발행)] --> J
-    E[5. 금융 변동성 & 신용위험 (VIX, MOVE, 하이일드)] --> J
-    F[6. 환율 & 무역 제재 (DXY, USD/JPY, BIS 수출통제)] --> J
-    G[7. 지정학 & 원자재 (GPR, 유가, 구리, 금)] --> J
-    H[8. 비정형 재난 & 기후 (WHO 전염병, NOAA 이상기후)] --> J
-    I[9. 기관 수급 & 고용 (CoT, 실업수당, 10Y-2Y 금리차)] --> J
-    J --> K[입체적 매수 추천 & 내 포트폴리오 매도 신호 발송]
+    A[전체 미국 상장 주식 ~6,000개] --> B[Stage 1: 하방 리스크 & 부실주 Hard Filter]
+    B -- 부채비율>200%, FCF적자, 잡주 제거 --> C[1차 안전 종목군 ~1,200개]
+    C --> D[Stage 2: 9대 글로벌 시장 온도계 Macro Sector Rotation]
+    D -- 지정학/CapEx/환율/자원 수혜 섹터 선정 --> E[2차 수혜 섹터 종목군 ~150개]
+    E --> F[Stage 3: 퀀트 펀더멘털 & 밸류에이션 Scoring]
+    F -- 실적/FCF/PEG/수주 잔고 100점 만점 평가 --> G[3차 우량 후보군 ~15개]
+    G --> H[Stage 4: LLM 다차원 Contextual Deep Matching]
+    H -- 무역제재/환율/정책 텍스트 딥 매칭 --> I[4차 최종 추천 종목 3~5개]
+    I --> J[Stage 5: If-Then 트리거 매수 & 내 포트폴리오 매도 신호 발송]
 ```
 
 ---
 
-## 3. 🌐 올인원 무료 데이터 수집 파이프라인 (All-in-One Data Matrix)
+### 2.1 단계별 종목 추리기 세부 로직 (Screening Stage Details)
 
-비용은 100% 무료(`yfinance`, `SEC EDGAR API` 등)로 유지하면서 개별 기업의 재무제표와 9대 종합 거시 지표를 정밀하게 수집합니다.
+#### 1단계: 하방 리스크 & 부실주 필터 (Stage 1: Risk-Off Hard Filter)
+* **목적:** 파산 위험이 있거나 재무가 부실한 잡주, 유동성 부족 종목을 1차적으로 완전 제거 (~6,000개 $\rightarrow$ ~1,200개).
+* **하드 필터링 조건:**
+  1. **부채비율 (Debt-to-Equity):** $> 200\%$ 종목 제거 (고금리 시기 파산 위험 스크리닝).
+  2. **잉여현금흐름 (Free Cash Flow):** 최근 12개월 FCF 연속 적자 종목 제거.
+  3. **시가총액 (Market Cap):** $<\$1B$ (약 1조 3,000억원 미만) 페니 스톡/소형 잡주 제거.
+  4. **일평균 거래대금 (Daily Volume):** $<\$10M$ 미만 유동성 부족 종목 제거.
 
-| 분류 | 핵심 지표 / 데이터 | 데이터 출처 (Data Source) | 비용 | 파급 효과 및 트레이더 해석 |
-| :--- | :--- | :--- | :--- | :--- |
-| **1. 기업 재무제표 & 밸류** | **손익계산서 (매출/영업이익/EPS)**<br>**재무상태표 (부채비율/현금성자산)**<br>**현금흐름표 (잉여현금흐름 FCF)**<br>**PER / PBR / PSR / 배당수익률** | **Yahoo Finance API** (`yfinance`)<br>**SEC EDGAR API** (10-Q/K) | **100% 무료** | · **부채비율 > 200%:** 고금리 시기 부실 위험 스크리닝 제외<br>· **FCF(잉여현금흐름) 양수 & 급증:** 자사주 매입/배당 증액 모멘텀<br>· **PER 역사적 하단:** 저평가 바닥 매수 기회 |
-| **2. B2B 수요 & CapEx** | **빅테크 4사 CapEx 지출/가이던스**<br>**미국 총 건설 지출 (`TTLCONS`)**<br>**ISM 제조업 신규수주 지수** | **SEC EDGAR API** (10-Q/K)<br>**FRED API** (`fredapi`) | **100% 무료** | · **Big Tech CapEx 증가:** NVDA, 메모리(MU), 서버/냉각(VRT) 수혜<br>· **건설 지출/가동률 > 80%:** 건설 기계(CAT), 파운드리 인프라 수혜 |
-| **3. 자원 생산 & 수출입** | **원유 생산/재고량 (EIA)**<br>**희토류/리튬 매장·생산 (USGS)**<br>**세계 곡물 수급 (USDA WASDE)** | **EIA API** / **USGS**<br>**USDA WASDE** / **LME** | **100% 무료** | · **EIA 원유 재고 감소:** 유가 상승 $\rightarrow$ 정유주(XOM) 수혜<br>· **중국 희토류 수출 규제:** MP Materials(MP) 등 대체 광산 폭등 |
-| **4. 자원 통상 & 제재** | **자원 수출 제한 조치**<br>**Global Trade Alert** | **GlobalTradeAlert.org**<br>**OECD Raw Materials** | **100% 무료** | · **자원 무기화 발표:** 공급망 차질 발생으로 수혜 섹터 갭상승<br>· **핵심 광물 관세:** 배터리/전기차(TSLA) 원가 부담 가중 |
-| **5. 성장 & 정책 인플레** | **실질 GDP 성장률 (`GDPC1`)**<br>**PCE 물가지수 / M2 통화량** | **FRED API** (`fredapi`) | **100% 무료** | · **2분기 연속 GDP 음수:** 경기 침체 경보<br>· **M2/국채발행 급증:** 정책성 인플레이션 재발 우려 |
-| **6. 금융 변동성 & 신용** | **VIX (주가 공포지수)**<br>**MOVE (채권 공포지수)**<br>**High-Yield Credit Spread** | **Yahoo Finance** / **FRED API** (`BAMLH0A0HYM2`) | **100% 무료** | · **VIX > 30:** 시장 패닉 (바닥 매수 기회 탐색)<br>· **신용 스프레드 급등:** 부실 기업 부도 위험 및 금융 위기 시그널 |
-| **7. 비정형 재난 & 기후** | **WHO 전염병 경보**<br>**NOAA 이상기후 (엘니뇨/태풍)** | **WHO RSS / NOAA Open Data** | **100% 무료** | · **전염병 경보:** 바이오주 호재, 항공/여행주 급락<br>· **이상 기후/태풍:** 농산물 폭등, 정유공장 가동 중단 |
-| **8. 환율 & 무역 제재** | **DXY (달러) / USD/JPY (엔화)**<br>**미 BIS 제재 / CHIPS / IRA** | **yfinance / Federal Register RSS** | **100% 무료** | · **USD/JPY 급락:** 엔 캐리 청산에 따른 기술주 폭락 경보<br>· **수출 제한 제재:** 장비주 악재 vs 미 파운드리 반사이익 |
-| **9. 기관 수급 & 고용** | **10Y-2Y 장단기 금리차**<br>**신규 실업수당 청구건수**<br>**CFTC CoT (기관 선물 수급)** | **FRED API** / **CFTC.gov** | **100% 무료** | · **장단기 금리차 역전 후 해제:** 역사적 경기 침체 도래<br>· **실업수당 청구 급증:** 고용 시장 냉각 시그널 |
+#### 2단계: 9대 글로벌 거시/자원 수혜 섹터 롤링 (Stage 2: Macro Sector Rotation)
+* **목적:** 9대 글로벌 시장 온도계 점수를 기반으로 현재 거시/지정학/CapEx 환경에서 가장 돈이 몰리는 주도 섹터(Sector & Industry) 선정 (~1,200개 $\rightarrow$ ~150개).
+* **섹터 매핑 조건 (Dynamic Macro Rules):**
+  * **지정학/유가 상승 국면:** Energy(XOM, CVX), Defense(LMT, RTX, PLTR) 섹터 스크리닝.
+  * **Big Tech AI CapEx / 금리 안정 국면:** Semiconductor(NVDA, MU), Data Center Infrastructure(VRT), Software.
+  * **자원 무기화 / 농산물 기후 이상 국면:** Agriculture/Fertilizer(NTR, ADM), Critical Minerals(MP).
+  * **전염병 경보 국면:** Healthcare/Biotech(PFE, MRNA).
+
+#### 3단계: 퀀트 펀더멘털 & 밸류에이션 스코어링 (Stage 3: Quant Fundamental Scoring)
+* **목적:** 수혜 섹터 안에서 가장 펀더멘털이 튼튼하고 저평가된 1등/우량 기업 스크리닝 (~150개 $\rightarrow$ 상위 15개).
+* **종합 스코어링 체계 (Composite Score = 100점 만점):**
+  $$\text{Total Score} = \text{실적 모멘텀(30점)} + \text{현금 창출력(30점)} + \text{밸류에이션(20점)} + \text{B2B 수주 잔고(20점)}$$
+  1. **실적 모멘텀 (30점):** 매출액 성장률(YoY) + EPS Surprise 지수.
+  2. **현금 창출력 (30점):** FCF Margin(FCF/매출액) + ROE.
+  3. **밸류에이션 매력도 (20점):** PEG Ratio(PER / EPS성장률) $< 1.5$ 인 성장 대비 저평가 종목 우대.
+  4. **전방 B2B 수주 잔고 (20점):** SEC 10-Q 수주 잔고(Backlog) 전분기 대비 증가율.
+
+#### 4단계: LLM 기반 맥락적 인과관계 딥 스크리닝 (Stage 4: LLM Contextual Deep Match)
+* **목적:** 퀀트 점수 상위 15개 기업을 대상으로, LLM이 무역제재, 수출통제, 환율, 뉴스 텍스트와 개별 기업 간의 **진짜 수혜/타격 인과관계(Real Beneficiary Check)**를 딥 매칭하여 최종 **3~5개 종목**으로 압축.
+* **LLM 딥 매칭 검증 질문 (Prompt Logic):**
+  * *"미 상무부 반도체 수출 제재가 발표되었을 때, 이 기업이 ASML처럼 중국 매출 비중(40%)이 커서 타격을 받는지, 아니면 INTEL/AMAT처럼 미국 내 파운드리 보조금을 받아 반사이익을 얻는가?"*
+  * *"엔화 강세(USD/JPY 급락) 시 이 기업의 밸류에이션이 캐리 트레이드 청산으로 인해 무너질 위험이 있는가?"*
+
+#### 5단계: 매수/매도 타이밍 & 주가 상승 트리거 확정 (Stage 5: Trigger & Execution)
+* **목적:** 추려진 3~5개 종목에 대한 **"언제 사고(Buy Trigger)"** 및 보유 중인 종목의 **"언제 팔 것인가(Sell Signal)"** 신호 확정.
+* **매수 트리거:** "WTI 유가 $\$85$ 확정 주봉 돌파 시" / "빅테크 실적 발표에서 CapEx 증액 확인 시"
+* **매도 시그널:** "목표 수익률 $+20\%$ 달성" / "손절 라인 $-7\%$ 도달" / "FCF 적자 전환 및 부채비율 급증"
 
 ---
 
-## 4. 🤖 LLM 주입용 올인원 프롬프트 구조 (All-in-One Context Matrix Architecture)
+## 3. 🧠 전문 트레이더 관점의 9대 종합 분석 레이어 (All-in-One Multi-Layer Approach)
 
-개별 기업 재무제표 펀더멘털과 거시 환경이 결합된 JSON 프롬프트를 생성하여 LLM이 우량주 선별 및 밸류에이션 평가를 내리도록 합니다.
+1. 개별 기업 재무제표 & 펀더멘털 (yfinance, SEC EDGAR: PER, FCF, 부채비율)
+2. 전방 B2B 수요 & 기업 CapEx (SEC EDGAR, 건설지출, ISM 신규수주)
+3. 자원 수급/생산량/수출입 (EIA, USGS, USDA, LME)
+4. 성장/인플레/정책 (GDP, M2, PCE, 국채발행)
+5. 금융 변동성 & 신용위험 (VIX, MOVE, 하이일드)
+6. 환율 & 무역 제재 (DXY, USD/JPY, BIS 수출통제)
+7. 지정학 & 원자재 (GPR, 유가, 구리, 금)
+8. 비정형 재난 & 기후 (WHO 전염병, NOAA 이상기후)
+9. 기관 수급 & 고용 (CoT, 실업수당, 10Y-2Y 금리차)
 
-### 4.1 LLM 입력 데이터 구조 예시 (JSON Schema)
+---
+
+## 4. 🌐 올인원 무료 데이터 수집 파이프라인 (All-in-One Data Matrix)
+
+| 분류 | 핵심 지표 / 데이터 | 데이터 출처 (Data Source) | 비용 | 파급 효과 및 트레이더 해석 |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. 기업 재무제표 & 밸류** | **손익계산서 / 재무상태표 / 현금흐름표**<br>**PER / PBR / FCF / 부채비율** | **Yahoo Finance API** (`yfinance`)<br>**SEC EDGAR API** | **100% 무료** | · **부채비율 > 200%:** 1단계 하드 필터로 자동 제재<br>· **FCF 양수 & 급증:** 3단계 퀀트 점수 30점 만점 부여 |
+| **2. B2B 수요 & CapEx** | **빅테크 CapEx / 미 건설지출 (`TTLCONS`)**<br>**ISM 신규수주 / 가동률 (`TCU`)** | **SEC EDGAR API** / **FRED API** | **100% 무료** | · **CapEx 증가:** 2단계 수혜 섹터(반도체/인프라) 선정<br>· **수주 잔고(Backlog) 급증:** 3단계 퀀트 점수 20점 우대 |
+| **3. 자원 생산 & 수출입** | **EIA 원유 재고 / USGS 광물 매장량**<br>**USDA WASDE 곡물 수급 / LME** | **EIA API** / **USGS** / **USDA** | **100% 무료** | · **EIA 원유 재고 감소:** 2단계 에너지 섹터 선정<br>· **중국 희토류 규제:** 4단계 LLM 딥 매칭으로 MP 소재주 선별 |
+| **4. 자원 통상 & 제재** | **Global Trade Alert / 무역제재** | **GlobalTradeAlert.org** | **100% 무료** | · **자원 무기화:** 4단계 LLM 분석에서 타격/수혜주 구별 |
+| **5. 성장 & 정책 인플레** | **실질 GDP (`GDPC1`) / PCE / M2** | **FRED API** (`fredapi`) | **100% 무료** | · **GDP 2분기 연속 음수:** 1단계 위험 관리 필터 적용 |
+| **6. 금융 변동성 & 신용** | **VIX / MOVE / 하이일드 스프레드** | **Yahoo Finance** / **FRED API** | **100% 무료** | · **VIX > 30:** 5단계 매수 트리거 (바닥 매수 신호 연동) |
+| **7. 비정형 재난 & 기후** | **WHO 전염병 RSS / NOAA 이상기후** | **WHO RSS** / **NOAA Open Data** | **100% 무료** | · **전염병 경보:** 2단계 바이오 섹터 롤링 적용 |
+| **8. 환율 & 무역 제재** | **DXY / USD/JPY / BIS 제재 관보** | **yfinance** / **Federal Register** | **100% 무료** | · **USD/JPY 급락:** 4단계 LLM 딥 분석으로 엔캐리 위험주 제외 |
+| **9. 기관 수급 & 고용** | **10Y-2Y 금리차 / 실업수당 (`ICSA`)** | **FRED API** / **CFTC.gov** | **100% 무료** | · **금리차 역전 해제:** 전체 포트폴리오 현금 비중 50% 확대 |
+
+---
+
+## 5. 🤖 LLM 주입용 올인원 프롬프트 구조 (All-in-One Context Matrix Architecture)
+
+4단계 LLM 딥 매칭 및 5단계 트리거에 사용되는 JSON 입출력 구조입니다.
+
 ```json
 {
-  "company_financial_fundamentals": {
-    "ticker": "MU",
-    "income_statement": {
-      "revenue_growth_yoy": "+82.5% (매출 폭발적 증가)",
-      "operating_margin": "24.2% (영업이익률 급반등)",
-      "eps_surprise": "+14.8% (시장 예상치 대폭 상회)"
-    },
-    "balance_sheet": {
-      "debt_to_equity": "38.5% (우수한 재무 건전성)",
-      "cash_and_equivalents": "$10.5B"
-    },
-    "cash_flow_statement": {
-      "free_cash_flow_fcf": "+$3.2B (잉여현금흐름 대폭 흑자)",
-      "operating_cash_flow": "+$4.8B"
-    },
-    "valuation_multiples": {
-      "forward_pe": "14.2x (역사적 평균 대비 저평가)",
-      "peg_ratio": "0.68 (성장성 대비 극저평가)"
-    }
+  "screening_stage": "Stage 4: LLM Contextual Deep Matching",
+  "candidate_stocks": [
+    {"ticker": "INTEL", "quant_score": 88, "sector": "Semiconductor"},
+    {"ticker": "ASML", "quant_score": 85, "sector": "Semiconductor"}
+  ],
+  "macro_context": {
+    "us_bis_export_control": "대중국 DUV 및 첨단 반도체 장비 수출 제재 강화 발표",
+    "us_chips_act_subsidy": "미 국내 파운드리 건설 기업에 $8.5B 보조금 지급 확정"
   },
-  "downstream_b2b_demand_and_capex": {
-    "bigtech_ai_capex_guidance": "MSFT, META, GOOGL 2026년 CapEx 전년 대비 +35% 증액 발표"
-  },
-  "user_portfolio": [
-    {"ticker": "MU", "avg_cost": 95.00, "current_price": 135.00, "pnl_pct": "+42.10% (재무건전성 & CapEx 호조 - 보유 추천)"}
-  ]
+  "llm_deep_matching_output": {
+    "recommended_stock": "INTEL",
+    "excluded_stock": "ASML",
+    "reasoning": "ASML은 중국 매출 비중(40%)이 커서 수출 제재 타격이 크나, INTEL은 미 국내 파운드리 보조금 수혜 및 미국 내 리쇼어링 반사이익을 직접적으로 받음."
+  }
 }
 ```
 
 ---
 
-## 5. ⚙️ 주가 상승(매수) & 포트폴리오 매도(Exit) 시나리오 엔진
-
-### 5.1 💡 재무 펀더멘털 & 밸류에이션 기반 매수(Buy) 시나리오 예시
-
-#### 시나리오 1: 잉여현금흐름(FCF) 흑자 전환 & F-PE 15배 이하 턴어라운드
-* **상황 조건 (IF):** 영업이익률 흑자 전환 AND 잉여현금흐름(FCF) 양수 돌파 AND 선행 PER(Forward P/E) < 15배.
-* **입체적 분석 (WHY):** 재무구조 악화 우려가 해소되고 실적 턴어라운드가 확인되어 밸류에이션 재평가(Re-rating) 진행.
-* **추천 종목:** **Micron Technology (MU)**, **Western Digital (WDC)**
-
----
-
-### 5.2 🛑 사용자 포트폴리오 진단 및 매도(Sell / Exit) 추천 알고리즘
-
-사용자가 **[보유 종목, 평균 매수가, 보유 수량]**을 입력하면, 재무제표 훼손(부채비율 급증, FCF 적자 전환, PER 극단적 과열)을 평가해 손절/익절 타이밍을 제시합니다.
-
-#### 5대 매도 평가 레이어:
-
-1. **재무제표 훼손 경보 (Financial Deterioration Signal):**
-   * **예시:** 잉여현금흐름(FCF) 적자 전환 OR 부채비율 200% 초과 $\rightarrow$ `[재무 건전성 악화 - 손절/비중 축소 권고]`
-
-2. **밸류에이션 극단적 과열 (Overvaluation Signal):**
-   * **예시:** PSR/PER이 역사적 고점 상단 3표준편차 오버슈팅 시 $\rightarrow$ `[차익 실현 분할 매도 권고]`
-
-3. **전방 산업 CapEx 삭감 및 피크아웃:**
-   * **예시:** 빅테크 CapEx 지출 삭감 발표 시 $\rightarrow$ `[익절 권고]`
-
-4. **신용 위험 & 환율 발작:**
-   * **예시:** USD/JPY 급락(엔캐리 청산) 시 $\rightarrow$ `[위험 관리]`
-
-5. **동적 익절/손절:**
-   * **수익 목표 (+20%) / 손절 라인 (-7%).**
-
----
-
-## 6. 📐 시스템 아키텍처 (System Architecture)
-
-```
- [9대 다차원 데이터 원천 (100% 무료/저비용)]
- ├── Yahoo Finance & SEC EDGAR (재무제표 3대 항목, FCF, PER/PBR, 부채비율)
- ├── SEC EDGAR API & FRED Construction & ISM (CapEx, B2B 신규수주, 가동률)
- ├── EIA API & USGS & USDA WASDE & LME (자원 생산/재고/수출입)
- ├── FRED API (GDP, PCE, M2, 신용스프레드, 장단기 금리차, 실업수당)
- ├── Yahoo Finance (주가, 원자재, VIX, MOVE 지수, FX 환율)
- ├── WHO RSS & NOAA Open Data (전염병 보건 경보, 기후 재해)
- ├── GPR Index & NY Fed GSCPI (지정학 지수, 공급망 압력 지수)
- └── US Federal Register & Global Trade Alert (무역제재, 자원수출통제)
-        │
-        ▼
- [Data Ingestion & All-in-One Context Matrix Builder]
-        │
-        ▼
- [AI Analysis Engine (Gemini All-in-One Context Prompt)]
- ├── 9대 레이어 재무제표/CapEx/거시/자원 리스크 종합 평가 (0~100 점수화)
- ├── 센티먼트 및 인과관계 매핑 (Bullish / Neutral / Bearish)
- └── 매수 추천 및 내 포트폴리오 매도 진단 보고서 작성
-        │
-        ▼
- [Rule & Trigger Engine]
- ├── If-Then 매수 시나리오 매칭
- └── 사용자 포트폴리오 매도(Sell) 시그널 진단기
-        │
-        ▼
- [StockLatte UI / Notification System]
- ├── 오늘의 시장 9대 종합 온도계 대시보드 (재무 펀더멘털 레이더 포함)
- ├── 입체적 종목 추천 리포트 (매수 타이밍 + 재무/CapEx/자원/기후 리스크)
- ├── 내 포트폴리오 매도 타이밍 진단 탭
- └── 텔레그램 / Discord / 웹 푸시 알림
-```
-
----
-
-## 7. 🖥️ 초보자를 위한 UI/UX 화면 구성 안 (StockLatte Dashboard)
+## 6. 🖥️ 초보자를 위한 UI/UX 화면 구성 안 (StockLatte Dashboard)
 
 1. **오늘의 글로벌 시장 9대 종합 온도계 (Market Thermometer)**
    * `🟢 재무 펀더멘털: 우수 (추천 종목 평균 FCF 흑자 & 부채비율 40% 미만 💎)`
@@ -174,25 +142,30 @@ flowchart TD
    * `🟢 비정형 보건/기후: 양호 (전염병 경보 없음)`
    * `🟢 신용/변동성: 양호 (VIX 22.5 / 하이일드 스프레드 안정)`
 
+2. **[NEW] 5단계 추리기 알고리즘 결과 리포트 (Top 3 Recommended Stocks)**
+   * **최종 엄선 1위:** Intel (INTEL) - `퀀트 점수 88점 | LLM 딥매칭: 반도체 보조금 수혜`
+   * **최종 엄선 2위:** Micron (MU) - `퀀트 점수 92점 | LLM 딥매칭: Big Tech CapEx HBM 독점 수혜`
+   * **최종 엄선 3위:** Caterpillar (CAT) - `퀀트 점수 84점 | LLM 딥매칭: 미 건설 지출 폭증 수혜`
+
 ---
 
-## 8. 🛠️ 단계별 개발 로드맵 (Milestones)
+## 7. 🛠️ 단계별 개발 로드맵 (Milestones)
 
-### Phase 1: 9대 데이터 수집 파이프라인 구축 (1~2주)
-* Python 기반 기업 재무제표 (`yfinance`, `SEC EDGAR API`), B2B CapEx, 자원 수급, 거시지표 파이프라인 구축 (`yfinance`, `fredapi`, `sec-edgar-downloader`, `feedparser`).
+### Phase 1: 5단계 추리기 파이프라인 & 데이터 수집 구축 (1~2주)
+* Stage 1 하드 필터 파이프라인, Stage 2 섹터 롤링, Stage 3 퀀트 스코어링 알고리즘 구축 (`yfinance`, `fredapi`, `sec-edgar-downloader`).
 * 사용자 평단가 기반 매도(Sell) 시그널 파이프라인 및 테스트 케이스 구축 (`tests/` 및 `test_results/`).
 
-### Phase 2: AI (Gemini) All-in-One Context Matrix Prompt 연동 (2~3주)
-* JSON 형태의 All-in-One Context Matrix를 Gemini Free Tier API에 전달하여 종합 진단 리포트 자동 생성.
+### Phase 2: AI (Gemini) Stage 4 LLM 딥 매칭 Prompt 연동 (2~3주)
+* 퀀트 점수 상위 15개 기업에 대해 뉴스/무역제재 텍스트와 개별 기업 간 인과관계를 딥 분석하는 Prompt Engineering 구현.
 
 ### Phase 3: Web Dashboard & 실시간 알림 서비스 구축 (3~4주)
-* HTML/Vanilla CSS/JavaScript (또는 Vite React) 기반의 9대 시장 온도계 및 포트폴리오 매도 진단 대시보드 구축.
+* HTML/Vanilla CSS/JavaScript (또는 Vite React) 기반 5단계 추리기 결과 및 9대 시장 온도계 대시보드 구축.
 
 ---
 
-## 9. 📚 참고 문헌 및 데이터 API (References)
+## 8. 📚 참고 문헌 및 데이터 API (References)
 
-1. **Yahoo Finance API (`yfinance`):** https://pypi.org/project/yfinance/ (재무제표 3대 항목, PER/PBR, FCF, 주가 시세 100% 무료)
+1. **Yahoo Finance API (`yfinance`):** https://pypi.org/project/yfinance/ (재무제표 3대 항목, PER/PBR, FCF, 주가 시세)
 2. **U.S. SEC EDGAR API:** https://www.sec.gov/edgar/sec-api-documentation (미 상장사 공식 10-Q/K 재무제표 공시 API)
 3. **FRED (Federal Reserve Economic Data):** https://fred.stlouisfed.org/ (건설 지출, 가동률, GDP, M2, PCE 무료 API)
 4. **U.S. Energy Information Administration (EIA):** https://www.eia.gov/ (원유/가스 생산 및 재고 API)

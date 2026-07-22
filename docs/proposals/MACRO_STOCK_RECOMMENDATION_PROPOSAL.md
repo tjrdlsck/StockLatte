@@ -1,135 +1,129 @@
 # 📈 [StockLatte] 올인원 거시경제·재무제표·차트/거래량·CapEx·자원수급·정책·환율·비정형 리스크 모니터링 기반 미국 주식 추천 시스템 상세 설계서
 
-> **작성일자:** 2026년 7월 22일 (다중 타임프레임 & 역발상 V자 과매도 반등 전담 엔진 최종 완비)  
+> **작성일자:** 2026년 7월 22일 (Gemma SLM 1차 요약 & 95% 토큰 압축 하이브리드 파이프라인 최종 완비)  
 > **작성자:** 글로벌 미국 주식 수석 트레이더 & AI 시스템 아키텍트  
-> **문서 목적:** 일간 단기 노이즈(Daily Noise) 착시를 방지하기 위한 **다중 타임프레임(주봉/일봉/60분봉)** 시각 및 Meta/Tesla/SOXL과 같은 **"일시적 악재 폭락 후 V자 대반등(Oversold Mean Reversion)" 전담 포착 엔진**을 탑재하여, 하락장 바닥 매수와 상승장 추세 매수를 완벽하게 커버하는 실전 자동화 서비스 구축  
+> **문서 목적:** 실시간 뉴스 데이터 수집 파이프라인과 **Gemma SLM(소형 언어 모델) 기반 3단계 텍스트 95% 압축 파이프라인**을 구축하여, 토큰 비용과 컨텍스트 위도우 한계를 완벽히 극복하고 메인 LLM이 빠르게 고차원 투자의사 결정을 내리는 올인원 미국 주식 매수/매도 시스템 구축  
 
 ---
 
-## 1. 🎯 프로젝트 개요 및 일간 단기 노이즈 해결
+## 1. 🎯 프로젝트 개요 및 토큰 최적화 해결책
 
-### 1.1 "일간 단위의 한계와 폭락 후 V자 대반등(Meta, Tesla, SOXL) 포착" 해답
-* **일간 단기 노이즈 딜레마 (Daily Noise & Illusion):** 하루 단위(Daily)로만 시장을 파악하면 일시적 매도세나 소음 뉴스에 속아 정확도가 떨어질 수 있습니다.
-* **과매도 V자 대반등 기회 놓침 (Meta/Tesla/SOXL Case):**
-  * *Meta(메타):* 실적 쇼크 및 리얼리티 랩 적자로 $90선까지 폭락 후 FCF 흑자 기반 $500 이상으로 5배 폭등.
-  * *Tesla/SOXL:* 일시적 악재로 극단적 과매도(RSI < 25) 진입 후 며칠 만에 30~50% 폭등하는 역발상 반등 파동 발생.
-* **해결책 (Dual-Track Screening & Multi-Timeframe):**
-  1. **다중 타임프레임 (Multi-Timeframe):** 주봉(Weekly - 큰 추세/펀더멘털) + 일봉(Daily - 과매도) + 60분봉(실시간 타점) 동시 분석.
-  2. **듀얼 트랙 스크리너 (Pass 1-A 추세 돌파 + Pass 1-B 과매도 V자 대반등):** 상승장 추세 종목과 폭락 후 대반등 종목을 동시에 포착.
+### 1.1 "뉴스 수집 방식과 Gemma SLM 토큰 압축" 해답
+* **뉴스 데이터 수집 문제 (News Ingestion):** 구글 뉴스, 야후 파이낸스, 미 관보(Federal Register) 등 실시간 경제/지정학 기사 수집 방안.
+* **토큰 초과 & 연산 비용 딜레마 (Token Overflow & Latency):** 매일 쏟아지는 수천 개 기사의 긴 원문 텍스트를 메인 LLM(Gemini / GPT-4)에 그대로 주입하면 **토큰 비용 폭발, Context Window 초과, 환각(Hallucination) 및 응답 지연**이 발생합니다.
+* **해결책 (Gemma SLM Map-Reduce 95% Token Compression):**
+  1. **무료 뉴스 RSS 수집:** Python `feedparser`를 활용해 키워드/Ticker별 실시간 뉴스 수집 (100% 무료).
+  2. **Gemma SLM 1차 요약기 (Pre-summarizer):** Gemma / Llama 3 8B 로컬 SLM을 이용해 기사 90% 노이즈 제거 및 **3줄 사건 요약 + 수혜 섹터 JSON 객체**로 95% 텍스트 압축 후 메인 LLM에 주입.
 
 ---
 
-## 2. ⚡ 2단계 린 듀얼트랙 스크리닝 아키텍처 (Dual-Track Lean Screening)
+## 2. ⚡ Gemma SLM 뉴스 수집 & 3단계 토큰 압축 아키텍처
 
 ```mermaid
 flowchart TD
-    A[전체 미국 상장 주식 ~6,000개 & SOXL/TQQQ] --> B{수급 & 과매도 듀얼 트랙 스크리너}
-    B -- Track A: 추세 돌파 --> C1[Pass 1-A: 거래대금 > $50M & 거래량 150% 폭증 & 정배열]
-    B -- Track B: 역발상 V자 반등 --> C2[Pass 1-B: RSI < 30 & FCF 흑자 & 바닥 거래량 망치형 양봉]
-    C1 & C2 --> D[오늘의 수급/과매도 핫 후보군 ~30개]
-    D --> E[Pass 2: 주봉/일봉 다중 타임프레임 & 10대 지표 LLM 딥 검증]
-    E -- 일시적 악재 폭락 vs 구조적 파산 구분 / 10대 지표 검증 --> F[최종 매수/매도 승률 90%+ 추천 종목 3~5개]
+    A[Google News RSS / Yahoo RSS / US Federal Register] --> B[Python feedparser 실시간 텍스트 수집]
+    B --> C[1단계: Gemma SLM 로컬/무료 노이즈 기사 90% 즉시 폐기]
+    C --> D[2단계: Gemma SLM 3줄 사건 요약 & 수혜/타격 JSON 변환 Map-Reduce]
+    D -- 기사당 2,000토큰 -> 50토큰 JSON으로 95% 압축 --> E[정제된 JSON Context Matrix]
+    E --> F[3단계: Gemini 메인 LLM에 압축 JSON 주입하여 최종 매수/매도 추천]
 ```
 
 ---
 
-### 2.1 Pass 1-A (추세 돌파) vs Pass 1-B (과매도 V자 대반등) 세부 로직
+### 2.1 3단계 뉴스 토큰 압축 세부 과정 (Compression Pipeline)
 
-| 구분 | Pass 1-A (상승 추세 돌파 Track) | Pass 1-B (역발상 V자 과매도 반등 Track - Meta/Tesla/SOXL 전용) |
-| :--- | :--- | :--- |
-| **타겟 종목** | 신고점 돌파, 강한 수급 정배열 종목 | **일시적 악재 폭락 후 과매도 바닥 반등 종목 (Meta, TSLA, SOXL 등)** |
-| **주가/차트 조건** | · 200일선 상단 위치<br>· 거래량 급증 $> 150\%$ | · **일봉 RSI(14) $< 30$** 또는 볼린저 밴드 하단 강하게 이탈<br>· **주봉(Weekly) 200주선/장기 지지선 터치** |
-| **펀더멘털 조건** | 매출액 성장률 YoY $> 15\%$ | · **FCF(잉여현금흐름) 흑자 유지** (파산 위험 0% 검증)<br>· **부채비율 $< 100\%$** |
-| **반등 시그널** | 거래대금 $> \$50M$ | · **투매 물량 소화 거래량 폭증(Capitulation Volume) + 망치형/도지 양봉** |
-
----
-
-## 3. 🧠 주봉+일봉 다중 타임프레임 분석 (Multi-Timeframe Matrix)
-
-하루 단위의 소음에 속지 않도록 주봉과 일봉을 결합해 분석합니다.
-
-1. **주봉 (Weekly Timeframe - 숲 보기):**
-   * **장기 추세 판단:** 주봉 50주/200주 이동평균선 상단 위치 및 장기 FCF 흑자 흐름 확인.
-   * **주봉 RSI:** 주봉 RSI가 35 이하 진입 후 반등 시 역사적 대바닥(Meta $90 구간) 감지.
-2. **일봉 (Daily Timeframe - 나무 보기):**
-   * **과매도 감지:** 일봉 RSI < 30 및 일간 거래량 폭증 망치형 캔들 포착.
-3. **60분봉 (Hourly Timeframe - 가지 보기):**
-   * **실시간 매수 타점:** 60분봉 MACD 골든크로스 시 최종 매수 진입 알림 발송.
+| 단계 | 수행 작업 | 사용 모델 / 기술 | 토큰 압축률 및 효과 |
+| :--- | :--- | :--- | :--- |
+| **1단계: 노이즈 필터링** | 광고, 단순 일상 뉴스, 루머 기사 스크리닝 폐기 | **Gemma 2B/8B (로컬/무료)** | **기사 수 90% 감축** (핵심 경제/지정학 뉴스만 남김) |
+| **2단계: JSON 구조화 요약** | 기사 원문 $\rightarrow$ `[사건요약, 영향섹터, Bullish/Bearish점수]` 변환 | **Gemma 8B (Map-Reduce)** | **텍스트 용량 95% 압축** (기사당 2,000토큰 $\rightarrow$ 50토큰) |
+| **3단계: 최종 LLM 추론** | 정제된 JSON Context Matrix 기반 최종 투자의사 결정 | **Gemini (메인 LLM)** | **토큰 초과 0% & 빠른 0.5초 응답** |
 
 ---
 
-## 4. 🌐 올인원 무료 데이터 수집 파이프라인 (All-in-One Data Matrix)
+## 3. 🤖 Gemma SLM 요약기 Output $\rightarrow$ Gemini 메인 LLM 주입 JSON 예시
 
-| 분류 | 핵심 지표 / 데이터 | 데이터 출처 (Data Source) | 비용 | 파급 효과 및 트레이더 해석 |
-| :--- | :--- | :--- | :--- | :--- |
-| **1. 차트 & 거래량 지표** | **주봉/일봉 OHLCV**<br>**주봉/일봉 RSI, 볼린저밴드**<br>**Capitulation Volume (투매 거래량)** | **yfinance API** (`OHLCV`)<br>**`pandas-ta` Python** | **100% 무료** | · **Pass 1-A:** 추세 돌파 수급 감지<br>· **Pass 1-B:** 일봉 RSI < 30 + 주봉 지지선 과매도 대반등 감지 |
-| **2. 기업 재무제표 & 밸류** | **손익계산서 / 재무상태표 / 현금흐름표**<br>**PER / PBR / FCF / 부채비율** | **yfinance / SEC EDGAR** | **100% 무료** | · **Pass 1-B 딥검증:** 폭락 종목이 단순 일시적 악재인지, FCF 적자 파산 위험인지 스크리닝 |
-| **3. B2B 수요 & CapEx** | **빅테크 CapEx / 미 건설지출 (`TTLCONS`)**<br>**ISM 신규수주 / 가동률 (`TCU`)** | **SEC EDGAR API** / **FRED API** | **100% 무료** | · **Pass 2 딥 검증:** SOXL/메타 폭락 시 전방 CapEx 펀더멘털 건재 여부 확인 |
-| **4. 자원 생산 & 수출입** | **EIA 원유 재고 / USGS 광물 매장량**<br>**USDA WASDE 곡물 수급 / LME** | **EIA API** / **USGS** / **USDA** | **100% 무료** | · **Pass 2 딥 검증:** 자원 수급 차질 및 원자재 과매도 분석 |
-| **5. 자원 통상 & 제재** | **Global Trade Alert / 무역제재** | **GlobalTradeAlert.org** | **100% 무료** | · **Pass 2 딥 검증:** 일시적 규제 악재 vs 영구 악재 구별 |
-| **6. 성장 & 정책 인플레** | **실질 GDP (`GDPC1`) / PCE / M2** | **FRED API** (`fredapi`) | **100% 무료** | · **Pass 2 딥 검증:** 거시 환경 리스크 체크 |
-| **7. 금융 변동성 & 신용** | **VIX / MOVE / 하이일드 스프레드** | **Yahoo Finance** / **FRED API** | **100% 무료** | · **VIX > 35 폭등 시:** SOXL/TQQQ/TSLA 역발상 바닥 매수 트리거 |
-| **8. 비정형 재난 & 기후** | **WHO 전염병 RSS / NOAA 이상기후** | **WHO RSS** / **NOAA Open Data** | **100% 무료** | · **Pass 2 딥 검증:** 팬데믹 과매도 종목 분석 |
-| **9. 환율 & 무역 제재** | **DXY / USD/JPY / BIS 제재 관보** | **yfinance** / **Federal Register** | **100% 무료** | · **Pass 2 딥 검증:** 엔캐리 청산 폭락 시 과매도 바닥 타이밍 잡기 |
-| **10. 기관 수급 & 고용** | **10Y-2Y 금리차 / 실업수당 (`ICSA`)** | **FRED API** / **CFTC.gov** | **100% 무료** | · **Pass 2 딥 검증:** 장단기 금리차 및 기관 수급 분석 |
-
----
-
-## 5. 🤖 LLM 주입용 일시적 폭락 vs 구조적 파산 판별 프롬프트
-
-Meta나 Tesla처럼 폭락한 종목이 **"일시적 기회인가, 구조적 파산인가?"**를 LLM이 판별하는 구조입니다.
+Gemma SLM이 길고 복잡한 뉴스 기사 10개를 읽어 아래와 같이 정제된 단 300 토큰짜리 JSON 데이터로 압축하여 메인 LLM에 주입합니다.
 
 ```json
 {
-  "oversold_stock_eval": {
-    "ticker": "META",
-    "price_drop": "-25% (어닝 발표 직후 폭락)",
-    "weekly_rsi": "28.5 (역사적 과매도 구간)",
-    "daily_candle": "Capitulation Volume 폭증 + 밑꼬리 망치형 양봉 발생"
-  },
-  "fundamentals_check": {
-    "free_cash_flow": "+$39B (압도적 흑자 유지)",
-    "debt_to_equity": "22.1% (매우 건전)",
-    "main_cause_of_drop": "리얼리티 랩(VR) 손실 확대에 대한 시장의 과도한 공포"
-  },
-  "llm_reversion_decision": {
-    "classification": "TEMPORARY_OVERREACTION (일시적 과도한 공포 폭락)",
-    "action": "STRONG_BUY_REVERSION (역발상 V자 대반등 바닥 매수 승인)",
-    "target_catalyst": "FCF 현금 창출력 바탕 자사주 매입 발표 및 주봉 200주선 반등 기대"
+  "slm_news_summary_matrix": [
+    {
+      "news_id": "N001",
+      "headline": "미 상무부, 대중국 첨단 반도체 및 HBM 수출 규제 관보 게재",
+      "summary_3lines": "1. 미 상무부 대중 반도체 수출 통제 강화 발표.\n2. 중국 매출 비중 높은 장비사 타격 예상.\n3. 미국 내 리쇼어링 파운드리 기업 반사이익 전망.",
+      "impact_sectors": ["Semiconductor_Equipment (Bearish)", "US_Foundry (Bullish)"],
+      "sentiment_score": -0.65
+    },
+    {
+      "news_id": "N002",
+      "headline": "Big Tech 4사, 2026년 AI 데이터센터 CapEx 전년 대비 35% 증액 발표",
+      "summary_3lines": "1. MSFT, META, GOOGL 데이터센터 지출 상향.\n2. AI 서버 GPU 및 HBM 메모리 수주 소진 예고.\n3. 서버 냉각 및 전력 인프라 기업 수혜.",
+      "impact_sectors": ["HBM_Memory (Strong Bullish)", "DataCenter_Cooling (Bullish)"],
+      "sentiment_score": +0.88
+    }
+  ],
+  "macro_and_financial_context": {
+    "us_10y_yield": "4.25%",
+    "wti_crude": "$86.50",
+    "target_stock_fundamentals": {"ticker": "MU", "fcf": "+$3.2B", "volume_surge": "245%"}
   }
 }
 ```
 
 ---
 
+## 4. 🧠 주봉+일봉 다중 타임프레임 & 듀얼 트랙 스크리닝
+
+1. **Pass 1-A (추세 돌파):** 거래대금 $>\$50M$ + 거래량 $>150\%$ 폭증.
+2. **Pass 1-B (과매도 V자 대반등 - Meta/Tesla/SOXL 타겟):** 일봉 RSI < 30 + FCF 흑자 + 투매 거래량 만개.
+3. **Pass 2 (10대 방대 지표 & Gemma 요약 JSON 검증):** 30개 후보 종목에 대해 Gemma 압축 JSON을 주입해 딥 검증.
+
+---
+
+## 5. 🌐 올인원 무료 데이터 수집 파이프라인 (All-in-One Data Matrix)
+
+| 분류 | 핵심 지표 / 데이터 | 데이터 출처 (Data Source) | 비용 | 파급 효과 및 트레이더 해석 |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. 실시간 뉴스 데이터** | **Google News RSS<br>Yahoo Finance RSS<br>US Federal Register RSS** | **Python `feedparser`** | **100% 무료** | · 키워드/Ticker별 실시간 뉴스 수집<br>· **Gemma SLM이 95% 텍스트 압축하여 메인 LLM 전달** |
+| **2. 차트 & 거래량 지표** | **주봉/일봉 OHLCV / RSI / OBV** | **yfinance / `pandas-ta`** | **100% 무료** | · 추세 돌파 및 과매도 V자 대반등 시그널 감지 |
+| **3. 기업 재무제표 & 밸류** | **손익계산서 / 재무상태표 / FCF** | **yfinance / SEC EDGAR** | **100% 무료** | · FCF 적자 및 부채비율 > 200% 부실주 스크리닝 제거 |
+| **4. B2B 수요 & CapEx** | **빅테크 CapEx / 미 건설지출** | **SEC EDGAR API / FRED** | **100% 무료** | · 빅테크 CapEx 수주 밸류체인 분석 |
+| **5. 자원 생산 & 수출입** | **EIA 원유 재고 / USGS 광물 매장량** | **EIA API / USGS / USDA** | **100% 무료** | · 자원 수급 및 자원 무기화 분석 |
+| **6. 거시/금융/기후/환율** | **GDP, PCE, VIX, DXY, WHO RSS** | **FRED API / yfinance / WHO** | **100% 무료** | · 10대 다차원 리스크 종합 분석 |
+
+---
+
 ## 6. 🖥️ 초보자를 위한 UI/UX 화면 구성 안 (StockLatte Dashboard)
 
-1. **오늘의 수급 & 과매도 듀얼 레이더 (Dual-Track Radar)**
-   * `🚀 추세 돌파 수급 종목 (Pass 1-A): 18개 감지`
-   * `💎 역발상 V자 과매도 대반등 종목 (Pass 1-B - Meta/TSLA/SOXL 타겟): 4개 감지 (RSI < 30 & FCF 흑자)`
+1. **Gemma SLM 뉴스 실시간 파이프라인 요약 레이더**
+   * `📰 실시간 뉴스 수집: 1,240개 수집 ➔ Gemma SLM이 12개 핵심 뉴스(JSON)로 95% 압축 완강!`
 
-2. **[NEW] 역발상 V자 대반등 추천 리포트 (Top Reversion Opportunity)**
-   * **과매도 대반등 1위:** Tesla (TSLA) - `일봉 RSI 26.4 | FCF 양수 | 투매 거래량 만개 & 망치형 양봉 감지 (V자 대반등 승인)`
-   * **과매도 대반등 2위:** SOXL (반도체 3배 레버리지) - `SOX 지수 주봉 200주선 터치 | VIX 36 폭등 후 피크아웃 | 분할 매수 타점`
+2. **오늘의 수급 & 과매도 듀얼 레이더**
+   * `🚀 추세 돌파 수급 종목 (Pass 1-A): 18개 감지`
+   * `💎 역발상 V자 과매도 대반등 종목 (Pass 1-B): 4개 감지 (Meta/TSLA/SOXL 타겟)`
+
+3. **최종 추천 종목 리포트**
+   * **1위 Micron (MU):** `Gemma 뉴스요약: Big Tech CapEx 35% 증액 호재 | 퀀트 95점 | 바닥 거래량 245% 폭증`
 
 ---
 
 ## 7. 🛠️ 단계별 개발 로드맵 (Milestones)
 
-### Phase 1: 듀얼 트랙 스크리너 & 주봉/일봉 파이프라인 구축 (1주)
-* `yfinance` 기반 주봉/일봉/60분봉 OHLCV 및 RSI < 30 + FCF 흑자 Pass 1-B 과매도 스크리너 알고리즘 구축.
+### Phase 1: Python feedparser 뉴스 RSS 수집 & Gemma SLM 요약기 구축 (1주)
+* 구글/야후 뉴스 RSS 수집 파이프라인 및 Gemma 8B SLM을 활용한 3줄 요약 & JSON 변환 Map-Reduce 로직 구현.
 
-### Phase 2: AI (Gemini) 일시적 폭락 판별 Prompt 연동 (2주)
-* 과매도 폭락 종목에 대해 FCF/재무제표와 공포 뉴스를 대입하여 일시적 과반등 기회인지 판별하는 LLM Prompt 구현.
+### Phase 2: Gemini 메인 LLM 다차원 Context Matrix 연동 (2주)
+* 정제된 JSON Context Matrix를 Gemini API에 주입하여 최종 투자의사 결정 도출.
 
 ### Phase 3: Web Dashboard & 실시간 알림 서비스 구축 (3~4주)
-* HTML/Vanilla CSS/JavaScript 기반 추세 돌파 vs 과매도 V자 대반등 듀얼 트랙 대시보드 구축.
+* HTML/Vanilla CSS/JavaScript 기반 뉴스 요약 레이더 및 매수/매도 대시보드 구축.
 
 ---
 
 ## 8. 📚 참고 문헌 및 데이터 API (References)
 
-1. **Yahoo Finance API (`yfinance`):** https://pypi.org/project/yfinance/ (주봉/일봉/60분봉 OHLCV, RSI, FCF 무료)
-2. **`pandas-ta` Python Library:** https://github.com/twopirllc/pandas-ta (주봉/일봉 RSI, 볼린저밴드, MACD 지표 계산)
-3. **U.S. SEC EDGAR API:** https://www.sec.gov/edgar/sec-api-documentation (공식 10-Q/K FCF 및 부채비율 파싱)
-4. **FRED (Federal Reserve Economic Data):** https://fred.stlouisfed.org/ (VIX, 하이일드 스프레드 무료 API)
+1. **Python `feedparser`:** https://pypi.org/project/feedparser/ (Google News/Yahoo RSS 수집 100% 무료)
+2. **Gemma Open Models (Google DeepMind):** https://ai.google.dev/gemma (소형 언어 모델 SLM 뉴스 1차 요약기)
+3. **Yahoo Finance API (`yfinance`):** https://pypi.org/project/yfinance/ (주가 OHLCV, 재무제표 100% 무료)
+4. **`pandas-ta` Python Library:** https://github.com/twopirllc/pandas-ta (기술적 지표 계산)
+5. **FRED (Federal Reserve Economic Data):** https://fred.stlouisfed.org/ (거시 지표 무료 API)

@@ -1,74 +1,87 @@
-# 📈 [StockLatte] 글로벌 거시경제·통상정책·환율 및 지정학 모니터링 기반 미국 주식 추천 시스템 상세 설계서
+# 📈 [StockLatte] 올인원 글로벌 거시경제·정책·환율·비정형 리스크 모니터링 기반 미국 주식 추천 시스템 상세 설계서
 
-> **작성일자:** 2026년 7월 22일 (다차원 통상·환율·무역 제재 파이프라인 확장)  
+> **작성일자:** 2026년 7월 22일 (전염병·자연재해·GDP·신용스프레드 등 올인원 확장)  
 > **작성자:** 글로벌 미국 주식 수석 트레이더 & AI 시스템 아키텍트  
-> **문서 목적:** 전쟁 등 지정학적 리스크뿐만 아니라 **무역 제재, 수출 제한, 환율 변동성(엔캐리/위안화), 통상 정책, 공급망 병목** 등 다차원 글로벌 경제 지표를 실시간 수집하여, LLM이 입체적이고 정밀한 **"미국 주식 매수/매도 시나리오"**를 도출하는 가성비 최고의 자동화 서비스 구축  
+> **문서 목적:** 지정학/금리뿐만 아니라 **GDP 성장률, 정책 인플레이션(M2/국채발행), 전염병/자연재해, 환율, 무역제재, 신용스프레드, 공포지수(VIX/MOVE)** 등 시장을 흔드는 모든 변수를 실시간 수집하여, LLM이 전천후로 **"미국 주식 매수/매도 시나리오"**를 도출하는 완벽한 자동화 서비스 구축  
 
 ---
 
 ## 1. 🎯 프로젝트 개요 및 배경
 
 ### 1.1 배경 및 문제 정의
-* **복합적 거시 리스크 (Multi-Dimensional Macro Risks):** 글로벌 주식 시장은 단순히 '전쟁(지정학)'이나 '금리' 하나만으로 움직이지 않습니다. **미·중 무역 제재(수출 제한), 인플레이션 감축법(IRA)/반도체법(CHIPS Act), 환율 변동(엔 캐리 트레이드 청산, 달러 강세), 공급망 병목** 등이 복합적으로 작용합니다.
-* **경제 지식 진입 장벽:** 일반 투자자는 "미국의 반도체 수출 제한(BIS 제재)이 인텔, ASML, NVDA 중 어디에 호재이고 어디에 악재인가?", "엔화 강세(엔 캐리 언와인딩)가 왜 미국 기술주 폭락을 일으키는가?"와 같은 **복잡한 정책·환율·지정학 인과관계**를 분석하기 어렵습니다.
-* **LLM 판단력 극대화의 필요성:** LLM(대형 언어 모델)에게 단순 뉴스 기사만 입력하면 차원 낮은 답변이 나옵니다. **[금리+환율+무역제재/정책+지정학+원자재+공급망]** 데이터가 정제된 다차원 데이터 매트릭스(Context Matrix)로 제공되어야만 전문 트레이더 수준의 날카로운 분석이 가능합니다.
-* **해결책:** 무료/저비용 고품질 API를 활용하여 **환율, 무역제재, 지정학, 거시지표, 공급망** 데이터를 입체적으로 자동 수집·정제하고, 사용자 포트폴리오 평단가와 연동하여 **"정밀 매수 추천 + 포트폴리오 매도(익절·손절) 가이드"**를 제공합니다.
+* **블랙 스완 & 복합 리스크 (Black Swan & Multi-Risk Factors):** 글로벌 금융 시장은 단순 금리나 전쟁 외에도 **GDP 침체, 정책성 유동성 과잉(M2/국채 발행), 전염병(Pandemic), 자연재해/이상기후(엘니뇨/태풍), 신용 위험(하이일드 스프레드), 환율 발작(엔 캐리 청산)** 등 예측 불가능한 변수에 의해 급변합니다.
+* **초보 투자자의 한계:** 개인이 매주 발표되는 신규 실업수당 청구건수, PCE 물가지수, WHO 보건 경보, NOAA 기후 재해 소식, CBOE VIX 지수 등을 수집하고 주가 영향도를 계산하는 것은 불가능합니다.
+* **LLM 판단력의 완전성 (Completeness of LLM Input):** 지표가 누락되면 LLM은 "잘못된 판단(Hallucination)"을 내립니다. 시장을 움직이는 6대 영역 데이터가 모두 주입되어야만 전문 수석 트레이더 수준의 날카로운 분석이 완성됩니다.
+* **해결책:** 100% 무료/저비용 데이터 원천을 통해 **[성장/인플레 + 금융/신용 + 환율/무역 + 지정학 + 비정형 재난/기후 + 수급]** 데이터를 정제된 **All-in-One Context Matrix**로 구축하여 최적의 투자의사 결정을 지원합니다.
 
 ---
 
-## 2. 🧠 전문 트레이더 관점의 5대 핵심 분석 레이어 (Top-Down Multi-Layer Approach)
+## 2. 🧠 전문 트레이더 관점의 6대 종합 분석 레이어 (All-in-One Multi-Layer Approach)
 
 ```mermaid
 flowchart TD
-    A[1. 거시경제/금리/환율 (FX & Rates)] --> F[LLM 다차원 Context Matrix Engine]
-    B[2. 지정학/전쟁 리스크 (Geopolitics)] --> F
-    C[3. 무역 제재/수출 제한/통상 정책 (Trade & Policy)] --> F
-    D[4. 공급망 & 원자재 지수 (Supply Chain & Commodities)] --> F
-    E[5. 사용자 보유 포트폴리오 (Ticker & 평단가)] --> F
-    F --> G[입체적 매수 추천 & 매도 타이밍 신호 발송]
+    A[1. 성장/인플레/정책 (GDP, M2, PCE, 국채발행)] --> G[LLM All-in-One Context Matrix]
+    B[2. 금융 변동성 & 신용위험 (VIX, MOVE, 하이일드)] --> G
+    C[3. 환율 & 무역 제재 (DXY, USD/JPY, BIS 수출통제)] --> G
+    D[4. 지정학 & 원자재 (GPR, 유가, 구리, 금)] --> G
+    E[5. 비정형 재난 & 기후 (WHO 전염병, NOAA 이상기후)] --> G
+    F[6. 기관 수급 & 고용 (CoT, 실업수당, 10Y-2Y 금리차)] --> G
+    G --> H[입체적 매수 추천 & 내 포트폴리오 매도 신호 발송]
 ```
 
 ---
 
-## 3. 🌐 다차원 고품질 데이터 수집 파이프라인 (Data Source Matrix)
+## 3. 🌐 올인원 무료 데이터 수집 파이프라인 (All-in-One Data Matrix)
 
-비용은 100% 무료 또는 저비용 티어로 유지하면서, LLM의 판단 정확도를 극대화하기 위해 모니터링 범위를 **환율, 무역 통상, 공급망 지수**까지 대폭 확장했습니다.
+비용을 100% 무료(Free Tier/공공 데이터)로 유지하면서 시장을 흔드는 모든 핵심 지표의 데이터 출처를 정리했습니다.
 
 | 분류 | 핵심 지표 / 데이터 | 데이터 출처 (Data Source) | 비용 | 파급 효과 및 트레이더 해석 |
 | :--- | :--- | :--- | :--- | :--- |
-| **환율 & 통화 (FX)** | **DXY (달러 인덱스)<br>USD/JPY (엔/달러)<br>USD/CNY (위안/달러)** | **Yahoo Finance** (`yfinance`) / **FRED API** | **100% 무료** | · **엔화 강세:** 엔 캐리 트레이드 청산 시 기술주 글로벌 매도세 경보<br>· **달러 강세:** 다국적 기업(Big Tech) 해외 매출 평가절하 우려<br>· **위안화 약세:** 중국 경기 둔화 및 대중 수출 기업 부담 |
-| **무역 제재 & 수출 제한** | **미 BIS 제재 뉴스<br>CHIPS Act / IRA 정책<br>대중국 기술 수출 규제** | **US Federal Register RSS<br>Google News RSS** | **100% 무료** | · **반도체 장비 수출 제한:** ASML, AMAT 단기 악재 vs 미 파운드리(INTEL) 반사이익<br>· **희토류/배터리 수출 통제:** 전기차(TSLA), 2차전지 공급망 타격 |
-| **공급망 & 물류** | **GSCPI (글로벌 공급망 압력 지수)<br>BDI (발틱 운임 지수)** | **NY Fed Open Data<br>Investing.com Scraping** | **100% 무료** | · **공급망 압력 증가:** 유통/제조업체 마진 압박 및 물가 재상승<br>· **해운 운임 폭등:** 공급망 차질로 재고 비용 증가 |
-| **거시경제 & 금리** | **미 기준금리 (FEDFUNDS)<br>10년물 국채금리 (DGS10)<br>CPI / PPI / NFP** | **FRED API** (`fredapi`) | **100% 무료** | · **10년물 금리 상승:** 성장주/Big Tech 밸류에이션 부담<br>· **CPI 하락:** 연준 금리 인하 기대감 상승 (Risk-On) |
-| **지정학 & 원자재** | **GPR Index (지정학 지수)<br>WTI 원유 / 천연가스 / 구리** | **GPR Direct CSV / yfinance** | **100% 무료** | · **구리(Dr. Copper) 상승:** 글로벌 경기 회복 시그널<br>· **원유/가스 급등:** 정유주(XOM) 수혜, 항공/소비재 악재 |
+| **1. 성장 & 정책 인플레** | **실질 GDP 성장률 (`GDPC1`)**<br>**PCE 물가지수 (`PCEPI`)**<br>**M2 통화량 / 국채 발행량** | **FRED API** (`fredapi`) | **100% 무료** | · **2분기 연속 GDP 음수:** 경기 침체(Recession) 경보<br>· **M2/국채발행 급증:** 정책성 인플레이션 재발 우려<br>· **PCE 인플레:** 미 연준 금리 향방 결정 |
+| **2. 금융 변동성 & 신용** | **VIX (주가 공포지수)**<br>**MOVE (채권 공포지수)**<br>**High-Yield Credit Spread** | **Yahoo Finance** / **FRED API** (`BAMLH0A0HYM2`) | **100% 무료** | · **VIX > 30:** 시장 패닉 (바닥 매수 기회 탐색)<br>· **신용 스프레드 급등:** 부실 기업 부도 위험 및 금융 위기 시그널 |
+| **3. 비정형 재난 & 기후** | **WHO 전염병 경보**<br>**NOAA 이상기후 (엘니뇨/태풍)**<br>**곡물 가격 (대두/옥수수/밀)** | **WHO RSS / NOAA Open Data / yfinance** | **100% 무료** | · **전염병 경보:** 바이오/백신주 호재, 항공/여행주 급락<br>· **이상 기후/태풍:** 농산물 폭등, 정유공장 셧다운, 보험 손해율 급증 |
+| **4. 환율 & 무역 제재** | **DXY (달러) / USD/JPY (엔화)**<br>**미 BIS 제재 / CHIPS / IRA** | **yfinance / Federal Register RSS** | **100% 무료** | · **USD/JPY 급락:** 엔 캐리 청산에 따른 기술주 폭락 경보<br>· **수출 제한 제재:** 장비주 악재 vs 미 파운드리 반사이익 |
+| **5. 지정학 & 원자재** | **GPR Index (지정학 리스크)**<br>**WTI 원유 / 천연가스 / 구리** | **GPR Direct CSV / yfinance** | **100% 무료** | · **Dr. Copper(구리) 상승:** 실물 경기 회복 신호<br>· **원유/가스 급등:** 에너지주 수혜, 항공/소비재 마진 악화 |
+| **6. 기관 수급 & 고용** | **10Y-2Y 장단기 금리차**<br>**신규 실업수당 청구건수**<br>**CFTC CoT (기관 선물 수급)** | **FRED API** (`T10Y2Y`, `ICSA`) / **CFTC.gov** | **100% 무료** | · **장단기 금리차 역전 후 해제:** 역사적 경기 침체 임박<br>· **실업수당 청구 급증:** 고용 시장 냉각 시그널 |
 
 ---
 
-## 4. 🤖 LLM 주입용 다차원 프롬프트 구조 (LLM Context Matrix Architecture)
+## 4. 🤖 LLM 주입용 올인원 프롬프트 구조 (All-in-One Context Matrix Architecture)
 
-LLM이 트레이더처럼 고차원적 판단을 내릴 수 있도록 뉴스 한 줄이 아닌 **종합 상태 매트릭스**를 JSON 형태로 구성하여 Prompt로 제공합니다.
+시장 전체를 조망할 수 있는 구조화된 JSON 프롬프트를 생성하여 LLM의 분석 능력을 최대로 끌어올립니다.
 
 ### 4.1 LLM 입력 데이터 구조 예시 (JSON Schema)
 ```json
 {
-  "macro_environment": {
-    "us_10y_yield": "4.25% (하락세)",
-    "dxy_dollar_index": "104.2 (약세 전환)",
-    "usd_jpy_rate": "152.5 (엔화 강세 전환 ⚠️ 엔캐리 청산 경계)",
-    "gscpi_supply_chain_index": "+0.45 (공급망 원활)"
+  "growth_and_inflation_policy": {
+    "real_gdp_growth": "+1.4% (둔화세)",
+    "pce_inflation_yoy": "2.6%",
+    "m2_money_supply_trend": "상승 전환 (정책 유동성 공급)",
+    "initial_jobless_claims": "242K (안정적)"
   },
-  "policy_and_trade_news": [
-    "미 상무부, 대중국 첨단 AI 반도체 및 HBM 수출 제한 규제 강화 발표",
-    "EU, 중국산 전기차 추가 상계관세 최종 확정"
-  ],
+  "financial_volatility_and_credit": {
+    "cboe_vix": "22.5 (경계 단계)",
+    "move_bond_volatility": "115.0",
+    "high_yield_credit_spread": "3.85% (안정적)"
+  },
+  "unstructured_disasters_and_climate": {
+    "who_health_alerts": "새로운 조류 독감(H5N1) 변이 인체 감염 경보 발령",
+    "noaa_climate_status": "강력한 엘니뇨 지속 -> 곡물 및 천연가스 생산 차질 우려"
+  },
+  "fx_and_trade_policy": {
+    "dxy_dollar_index": "104.2",
+    "usd_jpy_rate": "151.2 (엔화 강세 압력 ⚠️)",
+    "export_restrictions": "미 상무부, 대중 첨단 기술 수출 통제 대상 12개 기업 추가"
+  },
   "geopolitics_and_commodities": {
-    "gpr_index": "145 (중동 긴장 상태)",
-    "wti_crude_oil": "$86.50 (상승세)",
-    "copper_price": "$4.50 (상승세)"
+    "gpr_index": "165 (높음)",
+    "wti_crude": "$87.20",
+    "copper_price": "$4.45",
+    "corn_grain_price": "$4.80 (기후 영향으로 급등)"
   },
   "user_portfolio": [
-    {"ticker": "NVDA", "avg_cost": 115.0, "current_price": 135.0, "pnl_pct": "+17.39%"},
-    {"ticker": "ASML", "avg_cost": 920.0, "current_price": 850.0, "pnl_pct": "-7.61%"}
+    {"ticker": "AAL", "avg_cost": 14.50, "current_price": 11.20, "pnl_pct": "-22.76%"},
+    {"ticker": "PFE", "avg_cost": 28.00, "current_price": 31.50, "pnl_pct": "+12.50%"}
   ]
 }
 ```
@@ -77,58 +90,60 @@ LLM이 트레이더처럼 고차원적 판단을 내릴 수 있도록 뉴스 한
 
 ## 5. ⚙️ 주가 상승(매수) & 포트폴리오 매도(Exit) 시나리오 엔진
 
-### 5.1 💡 다차원 매수(Buy) 시나리오 예시
+### 5.1 💡 비정형 리스크/정책 기반 매수(Buy) 시나리오 예시
 
-#### 시나리오 1: 미·중 반도체 수출 제한 강화 & 미 국내 생산 수혜
-* **상황 조건 (IF):** 미 상무부 대중 반도체 수출 규제 강화 발표 AND 미 국내 반도체 보조금(CHIPS Act) 집행.
-* **입체적 분석 (WHY):** 중국 비중이 높은 설계/장비사(ASML)는 단기 차질을 겪으나, 미국 내 파운드리 및 반도체 장비 제조업체는 정책적 지원과 수주 독점으로 하방 지지 형성.
-* **추천 종목:** **Intel (INTEL)**, **Applied Materials (AMAT)**
-* **매수 트리거 (WHEN TO BUY):** 관련 정책 세부안 발표 및 10년물 국채 금리 안정화 시.
+#### 시나리오 1: 전염병/보건 경보 발령 & 바이오 수혜 / 여행주 피하기
+* **상황 조건 (IF):** WHO 글로벌 보건 경보 단계 격상 뉴스 급증.
+* **입체적 분석 (WHY):** 백신/치료제 개발 바이오 기업 수주 급증, 항공/여행/소비재 진입 자제.
+* **추천 종목:** **Pfizer (PFE)**, **Moderna (MRNA)**
+* **매수 트리거 (WHEN TO BUY):** WHO 발표 직후 및 거래량 폭증 시.
 
-#### 시나리오 2: 엔화 강세 전환(엔 캐리 언와인딩) & 원자재/안전자산 부각
-* **상황 조건 (IF):** 일본 은행(BOJ) 금리 인상으로 USD/JPY 급락(엔화 강세) AND DXY 달러 인덱스 약세.
-* **입체적 분석 (WHY):** 엔 캐리 트레이드 자금이 회수되면서 고평가된 Big Tech 성장주는 단기 조정 조성을 받는 반면, 달러 약세로 인해 원자재/금(Gold) 가격 상승.
-* **추천 종목:** **SPDR Gold Shares (GLD)**, **Freeport-McMoRan (FCX - 구리)**
+#### 시나리오 2: 엘니뇨 기후 재해 & 비료/곡물 및 원자재 수혜
+* **상황 조건 (IF):** NOAA 엘니뇨 경보 지속 AND 곡물/비료 가격 $\$4.50$ 상방 돌파.
+* **입체적 분석 (WHY):** 농산물 수확량 감소로 곡물 거래사 및 비료 제조사 마진 급증.
+* **추천 종목:** **Nutrien (NTR)**, **Archer-Daniels-Midland (ADM)**
 
 ---
 
 ### 5.2 🛑 사용자 포트폴리오 진단 및 매도(Sell / Exit) 추천 알고리즘
 
-사용자가 **[보유 종목, 평균 매수가, 보유 수량]**을 입력하면, 환율/정책/지정학 리스크를 입체적으로 대입하여 대응 전략을 제시합니다.
+사용자가 **[보유 종목, 평균 매수가, 보유 수량]**을 입력하면, 전염병·신용스프레드·GDP 침체 등 블랙스완 요소를 포함하여 실시간 진단을 제공합니다.
 
-#### 매도 평가 3대 다차원 레이어:
+#### 4대 매도 평가 레이어:
 
-1. **정책 및 통상 악재 전환 (Policy/Trade Risk Signal):**
-   * **예시 (ASML/NVDA 보유 시):** 대중 수출 제한 규제 기습 발표 시 $\rightarrow$ `[단기 비중 축소 / 손절 고려 경고]`
-   * **예시 (전기차 보유 시):** IRA 보조금 폐지/축소 법안 발의 시 $\rightarrow$ `[매도 진단 보고서 제공]`
+1. **비정형 재난/전염병 악재 시그널:**
+   * **예시 (항공주 AAL 보유 시):** WHO 보건 경보 발령 시 $\rightarrow$ `[여행 감소 우려 - 즉시 손절/익절 매도 경고]`
 
-2. **환율 및 글로벌 유동성 경보 (FX & Liquidity Alarm):**
-   * **엔 캐리 언와인딩 경보:** USD/JPY 일간 2% 이상 하락 시 $\rightarrow$ 보유 중인 고P/E 기술주에 대해 `[트레일링 스탑 타이트 설정]` 권고.
+2. **신용 위험 & 금융 변동성 발작 (Credit & Volatility Crisis):**
+   * **예시:** 하이일드 신용 스프레드 $5.0\%$ 돌파 OR VIX 지수 $35$ 돌파 시 $\rightarrow$ `[전체 보유 종목 위험 관리 현금화 비율 확대 권고]`
 
-3. **동적 익절/손절 & 모멘텀 소멸:**
-   * **수익 목표 (Take-Profit):** 평단가 대비 $+20\%$ 달성 시 분할 매도(50%) 안내.
-   * **손절 (Stop-Loss):** 평단가 대비 $-7\%$ 도달 시 원인 분석(일시적 악재 vs 구조적 악재)과 함께 대응책 발송.
+3. **정책 인플레이션 & 금리 발작:**
+   * **예시:** M2 통화량 폭증 및 10년물 금리 $4.8\%$ 돌파 시 $\rightarrow$ `[고P/E 성장주 차익 실현 권고]`
+
+4. **동적 익절/손절 & 모멘텀 소멸:**
+   * **수익 목표 (Take-Profit):** $+20\%$ 분할 익절.
+   * **손절 (Stop-Loss):** $-7\%$ 도달 시 구조적 악재 판별 후 자동 대응 가이드 발송.
 
 ---
 
 ## 6. 📐 시스템 아키텍처 (System Architecture)
 
 ```
- [다차원 데이터 원천 (100% 무료/저비용)]
- ├── FRED API (금리, CPI, 환율, 고용)
- ├── Yahoo Finance (주가, 원자재, DXY, USD/JPY, USD/CNY)
- ├── GPR Index & GSCPI (지정학 & 뉴욕연준 공급망 지수)
- ├── US Federal Register & Google News RSS (무역제재, 수출제한)
- └── Economic & Policy Calendar
+ [6대 다차원 데이터 원천 (100% 무료/저비용)]
+ ├── FRED API (GDP, PCE, M2, 신용스프레드, 장단기 금리차, 실업수당)
+ ├── Yahoo Finance (주가, 원자재, VIX, MOVE 지수, FX 환율)
+ ├── WHO RSS & NOAA Open Data (전염병 보건 경보, 기후 재해)
+ ├── GPR Index & NY Fed GSCPI (지정학 지수, 공급망 압력 지수)
+ └── US Federal Register & Google News (무역제재, 수출통제)
         │
         ▼
- [Data Ingestion & Multi-Dimensional Matrix Builder]
+ [Data Ingestion & All-in-One Context Matrix Builder]
         │
         ▼
- [AI Analysis Engine (Gemini Context Matrix Prompt)]
- ├── 다차원 거시/지정학/정책 리스크 종합 평가 (0~100 점수화)
+ [AI Analysis Engine (Gemini All-in-One Context Prompt)]
+ ├── 6대 레이어 리스크 종합 평가 (0~100 점수화)
  ├── 센티먼트 및 인과관계 매핑 (Bullish / Neutral / Bearish)
- └── 매수 및 매도 진단 보고서 자동 작성
+ └── 매수 추천 및 내 포트폴리오 매도 진단 보고서 작성
         │
         ▼
  [Rule & Trigger Engine]
@@ -137,8 +152,8 @@ LLM이 트레이더처럼 고차원적 판단을 내릴 수 있도록 뉴스 한
         │
         ▼
  [StockLatte UI / Notification System]
- ├── 오늘의 시장 온도계 대시보드 (금리/지정학/환율/통상 4대 레이더)
- ├── 입체적 종목 추천 리포트 (매수 타이밍 + 정책/환율 리스크)
+ ├── 오늘의 시장 6대 종합 온도계 대시보드
+ ├── 입체적 종목 추천 리포트 (매수 타이밍 + 기후/전염병/정책 리스크)
  ├── 내 포트폴리오 매도 타이밍 진단 탭
  └── 텔레그램 / Discord / 웹 푸시 알림
 ```
@@ -147,41 +162,44 @@ LLM이 트레이더처럼 고차원적 판단을 내릴 수 있도록 뉴스 한
 
 ## 7. 🖥️ 초보자를 위한 UI/UX 화면 구성 안 (StockLatte Dashboard)
 
-1. **오늘의 글로벌 시장 4대 종합 온도계 (Market Thermometer)**
+1. **오늘의 글로벌 시장 6대 종합 온도계 (Market Thermometer)**
    * `🔴 지정학 리스크: 높음 (중동 유가 변동성 ⚠️)`
+   * `🔴 비정형 보건/기후: 경계 (WHO 조류 독감 경보 & 엘니뇨 곡물가 폭등 ⚠️)`
    * `🟡 환율/통화 리스크: 주의 (엔화 강세 전환 ⚠️ 엔캐리 청산 경계)`
    * `🔵 무역/통상 규제: 보통 (미 대중 반도체 추가 제재 발표)`
    * `🟢 금리/인플레: 안정 (FOMC 금리 인하 가능성 80%)`
-   * `오늘의 추천 키워드: #반도체정책 #구리 #안전자산`
+   * `🟢 신용/변동성: 양호 (VIX 22.5 / 하이일드 스프레드 안정)`
 
 2. **[NEW] 내 포트폴리오 매도 진단 카드 (Portfolio Sell Assistant)**
-   * **입력 예시:** Ticker `ASML` | 평단가 `$920.00` | 현재가 `$850.00` (수익률 `-7.61%`)
-   * **진단 결과:** `🔴 [구조적 정책 악재 - 손절/비중 축소 고려]`
+   * **입력 예시:** Ticker `AAL` (아메리칸 항공) | 평단가 `$14.50` | 현재가 `$11.20` (수익률 `-22.76%`)
+   * **진단 결과:** `🔴 [비정형 보건 악재 발생 - 손절 및 매도 권고]`
    * **입체적 분석 사유:**
-     1. 미 상무부의 대중국 DUV 노광장비 수출 통제 규제 강화 확정.
-     2. ASML 중국 매출 비중(약 40%) 감소에 따른 내년 EPS 하향 조정 불가피.
-     3. **추천 대응:** 단순 반등 대기보다 손절 라인(-7% 상회)에 따라 비중 50% 감축 후 미 국내 생산 반도체(INTEL, AMAT)로 교체 매매 권장.
+     1. WHO의 새로운 전염병 보건 경보 발령으로 글로벌 여객 수요 감소 직격탄 우려.
+     2. 유가 $87 돌파로 항공유 정제 비용 마진 부담 가중.
+     3. **추천 대응:** 반등을 기다리기보다 손절 후 방산/바이오 섹터(PFE, MRNA)로 교체 매매 권장.
 
 ---
 
 ## 8. 🛠️ 단계별 개발 로드맵 (Milestones)
 
-### Phase 1: 다차원 데이터 수집 & 포트폴리오 엔진 구축 (1~2주)
-* Python 기반 거시 지표, 환율(DXY, USD/JPY, USD/CNY), 무역제재 뉴스, GSCPI 파이프라인 구축 (`yfinance`, `fredapi`, `feedparser`).
+### Phase 1: 6대 데이터 수집 파이프라인 구축 (1~2주)
+* Python 기반 거시지표, GDP, M2, VIX, MOVE, WHO RSS, NOAA 기후, FX 파이프라인 구축 (`yfinance`, `fredapi`, `feedparser`).
 * 사용자 평단가 기반 매도(Sell) 시그널 파이프라인 및 테스트 케이스 구축 (`tests/` 및 `test_results/`).
 
-### Phase 2: AI (Gemini) 다차원 Context Matrix Prompt 연동 (2~3주)
-* JSON 형태의 Multi-Dimensional Context Matrix를 Gemini Free Tier API에 전달하여 수석 트레이더 수준의 종합 진단 리포트 자동 생성.
+### Phase 2: AI (Gemini) All-in-One Context Matrix Prompt 연동 (2~3주)
+* JSON 형태의 All-in-One Context Matrix를 Gemini Free Tier API에 전달하여 종합 진단 리포트 자동 생성.
 
 ### Phase 3: Web Dashboard & 실시간 알림 서비스 구축 (3~4주)
-* HTML/Vanilla CSS/JavaScript (또는 Vite React) 기반의 4대 시장 온도계 및 포트폴리오 매도 진단 대시보드 구축.
+* HTML/Vanilla CSS/JavaScript (또는 Vite React) 기반의 6대 시장 온도계 및 포트폴리오 매도 진단 대시보드 구축.
 
 ---
 
 ## 9. 📚 참고 문헌 및 데이터 API (References)
 
-1. **FRED (Federal Reserve Economic Data):** https://fred.stlouisfed.org/ (미국 금리, 인플레이션, 환율 데이터)
-2. **Yahoo Finance API (`yfinance`):** https://pypi.org/project/yfinance/ (주가, 원자재, FX 시세)
-3. **NY Fed GSCPI (Global Supply Chain Pressure Index):** https://www.newyorkfed.org/research/policy/gscpi (공급망 압력 지수)
-4. **U.S. Federal Register (BIS Export Regulations):** https://www.federalregister.gov/ (미국 무역 제재/수출 통제 관보)
-5. **Geopolitical Risk (GPR) Index:** https://www.matteoiacoviello.com/gpr.htm (지정학 리스크 지수 데이터)
+1. **FRED (Federal Reserve Economic Data):** https://fred.stlouisfed.org/ (GDP, M2, PCE, 신용스프레드, 금리차, 실업수당 무료 API)
+2. **Yahoo Finance API (`yfinance`):** https://pypi.org/project/yfinance/ (주가, 원자재, VIX, MOVE, FX 시세)
+3. **WHO Disease Outbreak News:** https://www.who.int/emergencies/disease-outbreak-news (전염병 보건 경보 RSS)
+4. **NOAA Climate Prediction Center:** https://www.cpc.ncep.noaa.gov/ (이상기후 및 엘니뇨/라니냐 데이터)
+5. **NY Fed GSCPI:** https://www.newyorkfed.org/research/policy/gscpi (공급망 압력 지수)
+6. **U.S. Federal Register (BIS Export Regulations):** https://www.federalregister.gov/ (무역 제재 관보)
+7. **Geopolitical Risk (GPR) Index:** https://www.matteoiacoviello.com/gpr.htm (지정학 리스크 지수 데이터)

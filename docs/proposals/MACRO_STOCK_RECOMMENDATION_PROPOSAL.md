@@ -1,129 +1,117 @@
 # 📈 [StockLatte] 올인원 거시경제·재무제표·차트/거래량·CapEx·자원수급·정책·환율·비정형 리스크 모니터링 기반 미국 주식 추천 시스템 상세 설계서
 
-> **작성일자:** 2026년 7월 22일 (Gemma SLM 1차 요약 & 95% 토큰 압축 하이브리드 파이프라인 최종 완비)  
+> **작성일자:** 2026년 7월 22일 (섹터 1등 우량주 전용 조정 진입 경고 & 바닥 재매수 센서 엔진 최종 완비)  
 > **작성자:** 글로벌 미국 주식 수석 트레이더 & AI 시스템 아키텍트  
-> **문서 목적:** 실시간 뉴스 데이터 수집 파이프라인과 **Gemma SLM(소형 언어 모델) 기반 3단계 텍스트 95% 압축 파이프라인**을 구축하여, 토큰 비용과 컨텍스트 위도우 한계를 완벽히 극복하고 메인 LLM이 빠르게 고차원 투자의사 결정을 내리는 올인원 미국 주식 매수/매도 시스템 구축  
+> **문서 목적:** 대형 우량주(NVDA, TSLA, MSFT 등)의 **조정(Correction) 진입 시 미리 팔아 이익을 확정하는 '조정 경고 엔진(Peak-Out Warning)'**과 **조정 바닥에서 다시 사들여 폭등 수익을 누리는 '바닥 재매수 센서(Dip-Buying Sensor)'**를 구축하여 완벽한 매수/매도 타이밍을 제공하는 자동화 서비스 구축  
 
 ---
 
-## 1. 🎯 프로젝트 개요 및 토큰 최적화 해결책
+## 1. 🎯 프로젝트 개요 및 우량주 조정-재매수 타이밍 설계
 
-### 1.1 "뉴스 수집 방식과 Gemma SLM 토큰 압축" 해답
-* **뉴스 데이터 수집 문제 (News Ingestion):** 구글 뉴스, 야후 파이낸스, 미 관보(Federal Register) 등 실시간 경제/지정학 기사 수집 방안.
-* **토큰 초과 & 연산 비용 딜레마 (Token Overflow & Latency):** 매일 쏟아지는 수천 개 기사의 긴 원문 텍스트를 메인 LLM(Gemini / GPT-4)에 그대로 주입하면 **토큰 비용 폭발, Context Window 초과, 환각(Hallucination) 및 응답 지연**이 발생합니다.
-* **해결책 (Gemma SLM Map-Reduce 95% Token Compression):**
-  1. **무료 뉴스 RSS 수집:** Python `feedparser`를 활용해 키워드/Ticker별 실시간 뉴스 수집 (100% 무료).
-  2. **Gemma SLM 1차 요약기 (Pre-summarizer):** Gemma / Llama 3 8B 로컬 SLM을 이용해 기사 90% 노이즈 제거 및 **3줄 사건 요약 + 수혜 섹터 JSON 객체**로 95% 텍스트 압축 후 메인 LLM에 주입.
+### 1.1 "섹터 1등 우량주 위주 타게팅 & 조정 피하기 + 바닥 재매수" 해답
+* **왜 섹터 1등 우량주(Market Leaders)인가?:** 잡주(Small-Cap)는 조정 시 파산하거나 주가가 회복되지 않지만, **NVDA, TSLA, MSFT, AMZN, XOM, CAT 등 섹터 1등 주도주**는 압도적인 FCF(잉여현금흐름)와 시장 지배력 덕분에 **조정(-20%~-40%) 후 역사적 신고가를 경신하는 대폭등 확률이 90% 이상**입니다.
+* **조정 타이밍 딜레마 (Peak & Bottom Timing):** 우량주도 고점 징후 시 미리 팔고(익절 알림), 조정이 끝나는 바닥에서 재매수(바닥 추천)하는 타이밍 알고리즘이 필수적입니다.
+* **해결책 (Peak-Out & Dip-Buying Sensor):**
+  1. **조정 진입 경고 엔진 (Peak-Out Warning):** 거래량 다이버전스 + RSI 과열 꺾임 + VIX 발작 $\rightarrow$ `⚠️ [조정 위험 - 50% 분할 익절 알림]`
+  2. **바닥 재매수 센서 엔진 (Dip-Buying Sensor):** 50일/200일선 지지 + 투매 거래량 만개 망치형 캔들 + 60분봉 MACD 골든크로스 $\rightarrow$ `🎯 [조정 완료 - 우량주 바닥 재매수 알림]`
 
 ---
 
-## 2. ⚡ Gemma SLM 뉴스 수집 & 3단계 토큰 압축 아키텍처
+## 2. ⚡ 섹터 1등 우량주 조정-재매수 타이밍 알고리즘 (Timing Engine)
 
 ```mermaid
 flowchart TD
-    A[Google News RSS / Yahoo RSS / US Federal Register] --> B[Python feedparser 실시간 텍스트 수집]
-    B --> C[1단계: Gemma SLM 로컬/무료 노이즈 기사 90% 즉시 폐기]
-    C --> D[2단계: Gemma SLM 3줄 사건 요약 & 수혜/타격 JSON 변환 Map-Reduce]
-    D -- 기사당 2,000토큰 -> 50토큰 JSON으로 95% 압축 --> E[정제된 JSON Context Matrix]
-    E --> F[3단계: Gemini 메인 LLM에 압축 JSON 주입하여 최종 매수/매도 추천]
+    A[섹터 1등 주도 우량주: NVDA, TSLA, MSFT, XOM, CAT] --> B{주가 상태 모니터링}
+    B -- 고점 과열 & 피크아웃 징후 --> C[조정 진입 경고 엔진: Peak-Out Warning]
+    C -- 거래량 다이버전스 + RSI>75 꺾임 + VIX급등 --> D[⚠️ 미리 팔기 / 50% 분할 익절 알림 발송]
+    B -- 조정 진행 중 바닥 반등 징후 --> E[바닥 재매수 센서 엔진: Dip-Buying Sensor]
+    E -- 50/200일선 지지 + 투매 망치형 양봉 + 60분봉 MACD 골든크로스 --> F[🎯 조정 완료 / 바닥 재매수 추천 알림 발송]
 ```
 
 ---
 
-### 2.1 3단계 뉴스 토큰 압축 세부 과정 (Compression Pipeline)
+### 2.1 조정 진입 경고(미리 팔기) vs 바닥 재매수(다시 사기) 세부 지표
 
-| 단계 | 수행 작업 | 사용 모델 / 기술 | 토큰 압축률 및 효과 |
-| :--- | :--- | :--- | :--- |
-| **1단계: 노이즈 필터링** | 광고, 단순 일상 뉴스, 루머 기사 스크리닝 폐기 | **Gemma 2B/8B (로컬/무료)** | **기사 수 90% 감축** (핵심 경제/지정학 뉴스만 남김) |
-| **2단계: JSON 구조화 요약** | 기사 원문 $\rightarrow$ `[사건요약, 영향섹터, Bullish/Bearish점수]` 변환 | **Gemma 8B (Map-Reduce)** | **텍스트 용량 95% 압축** (기사당 2,000토큰 $\rightarrow$ 50토큰) |
-| **3단계: 최종 LLM 추론** | 정제된 JSON Context Matrix 기반 최종 투자의사 결정 | **Gemini (메인 LLM)** | **토큰 초과 0% & 빠른 0.5초 응답** |
+| 구분 | 1. 조정 진입 예상 경고 (Peak-Out Warning - 미리 팔기) | 2. 조정 바닥 재매수 센서 (Dip-Buying Sensor - 다시 사기) |
+| :--- | :--- | :--- |
+| **목적** | **고점 과열 및 조정 시작 전 이익 확정 (익절 알림)** | **조정이 끝나가는 바닥 구간 포착 및 폭등 전 재매수** |
+| **거래량 지표** | **거래량 다이버전스:** 주가 신고가 경신 중 거래량 감소 | **투매 거래량 만개 (Capitulation Volume):** 투매 폭증 후 멈춤 |
+| **차트/이평선** | **RSI > 75 과열 진입 후 70 하향 이탈** | **50일 또는 200일 이동평균선(기관 지지선) 터치 & 지지** |
+| **캔들 패턴** | 위꼬리가 긴 도지(Doji) 또는 음봉 캔들 출현 | **당일 밑꼬리를 달고 거래량이 터진 망치형(Hammer) 양봉** |
+| **거시/VIX 지수** | VIX 급등 시작 OR 엔/달러(USD/JPY) 급락 | VIX 지수 30 이상 폭등 후 피크아웃 꺾임 |
+| **실시간 타점** | 60분봉 MACD 데드크로스 발생 시 | **60분봉 MACD 골든크로스 발생 시 최종 재매수 발송** |
 
 ---
 
-## 3. 🤖 Gemma SLM 요약기 Output $\rightarrow$ Gemini 메인 LLM 주입 JSON 예시
+## 3. 🤖 LLM 주입용 조정 진단 및 재매수 프롬프트
 
-Gemma SLM이 길고 복잡한 뉴스 기사 10개를 읽어 아래와 같이 정제된 단 300 토큰짜리 JSON 데이터로 압축하여 메인 LLM에 주입합니다.
+Nvidia나 Tesla의 조정 상태를 LLM이 평가하여 미리 팔아야 할지, 바닥 재매수를 해야 할지 진단하는 JSON 구조입니다.
 
 ```json
 {
-  "slm_news_summary_matrix": [
-    {
-      "news_id": "N001",
-      "headline": "미 상무부, 대중국 첨단 반도체 및 HBM 수출 규제 관보 게재",
-      "summary_3lines": "1. 미 상무부 대중 반도체 수출 통제 강화 발표.\n2. 중국 매출 비중 높은 장비사 타격 예상.\n3. 미국 내 리쇼어링 파운드리 기업 반사이익 전망.",
-      "impact_sectors": ["Semiconductor_Equipment (Bearish)", "US_Foundry (Bullish)"],
-      "sentiment_score": -0.65
+  "stock_correction_monitoring": {
+    "ticker": "NVDA",
+    "status": "DIP_BUYING_STAGE (조정 바닥 반등 단계)",
+    "price_action": "$118.00 (고점 $140 대비 -15.7% 조정 받음)",
+    "indicators": {
+      "moving_average": "50일 이동평균선 정확히 터치 후 반등 캔들 형성",
+      "rsi_status": "일봉 RSI 38.2 -> 상승 전환 중",
+      "hourly_macd": "60분봉 MACD Golden Cross Confirmed"
     },
-    {
-      "news_id": "N002",
-      "headline": "Big Tech 4사, 2026년 AI 데이터센터 CapEx 전년 대비 35% 증액 발표",
-      "summary_3lines": "1. MSFT, META, GOOGL 데이터센터 지출 상향.\n2. AI 서버 GPU 및 HBM 메모리 수주 소진 예고.\n3. 서버 냉각 및 전력 인프라 기업 수혜.",
-      "impact_sectors": ["HBM_Memory (Strong Bullish)", "DataCenter_Cooling (Bullish)"],
-      "sentiment_score": +0.88
+    "fundamentals": {
+      "bigtech_capex": "Big Tech AI 데이터센터 CapEx 가이던스 여전히 +35% 증액 호조",
+      "fcf_status": "+$14B (펀더멘털 건재)"
     }
-  ],
-  "macro_and_financial_context": {
-    "us_10y_yield": "4.25%",
-    "wti_crude": "$86.50",
-    "target_stock_fundamentals": {"ticker": "MU", "fcf": "+$3.2B", "volume_surge": "245%"}
+  },
+  "llm_action_decision": {
+    "signal": "DIP_BUYING_RECOMMENDED (우량주 바닥 재매수 추천)",
+    "user_guideline": "조정이 마무리되고 50일선 지지를 확인하였습니다. 고점($140) 재탈환을 목표로 2차 재매수 진입을 추천합니다."
   }
 }
 ```
 
 ---
 
-## 4. 🧠 주봉+일봉 다중 타임프레임 & 듀얼 트랙 스크리닝
-
-1. **Pass 1-A (추세 돌파):** 거래대금 $>\$50M$ + 거래량 $>150\%$ 폭증.
-2. **Pass 1-B (과매도 V자 대반등 - Meta/Tesla/SOXL 타겟):** 일봉 RSI < 30 + FCF 흑자 + 투매 거래량 만개.
-3. **Pass 2 (10대 방대 지표 & Gemma 요약 JSON 검증):** 30개 후보 종목에 대해 Gemma 압축 JSON을 주입해 딥 검증.
-
----
-
-## 5. 🌐 올인원 무료 데이터 수집 파이프라인 (All-in-One Data Matrix)
+## 4. 🌐 올인원 무료 데이터 수집 파이프라인 (All-in-One Data Matrix)
 
 | 분류 | 핵심 지표 / 데이터 | 데이터 출처 (Data Source) | 비용 | 파급 효과 및 트레이더 해석 |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. 실시간 뉴스 데이터** | **Google News RSS<br>Yahoo Finance RSS<br>US Federal Register RSS** | **Python `feedparser`** | **100% 무료** | · 키워드/Ticker별 실시간 뉴스 수집<br>· **Gemma SLM이 95% 텍스트 압축하여 메인 LLM 전달** |
-| **2. 차트 & 거래량 지표** | **주봉/일봉 OHLCV / RSI / OBV** | **yfinance / `pandas-ta`** | **100% 무료** | · 추세 돌파 및 과매도 V자 대반등 시그널 감지 |
-| **3. 기업 재무제표 & 밸류** | **손익계산서 / 재무상태표 / FCF** | **yfinance / SEC EDGAR** | **100% 무료** | · FCF 적자 및 부채비율 > 200% 부실주 스크리닝 제거 |
-| **4. B2B 수요 & CapEx** | **빅테크 CapEx / 미 건설지출** | **SEC EDGAR API / FRED** | **100% 무료** | · 빅테크 CapEx 수주 밸류체인 분석 |
-| **5. 자원 생산 & 수출입** | **EIA 원유 재고 / USGS 광물 매장량** | **EIA API / USGS / USDA** | **100% 무료** | · 자원 수급 및 자원 무기화 분석 |
-| **6. 거시/금융/기후/환율** | **GDP, PCE, VIX, DXY, WHO RSS** | **FRED API / yfinance / WHO** | **100% 무료** | · 10대 다차원 리스크 종합 분석 |
+| **1. 조정 & 재매수 지표** | **50일/200일 MA 지지선<br>거래량 다이버전스 / 투매 거래량<br>60분봉 MACD / RSI** | **yfinance API** (`OHLCV`)<br>**`pandas-ta` Python** | **100% 무료** | · **조정 경고:** RSI>75 꺾임 시 미리 팔기 알림<br>· **바닥 재매수:** 50/200일선 지지 + 60분봉 MACD 골든크로스 알림 |
+| **2. 뉴스 & Gemma 요약** | **Google/Yahoo RSS** | **Python `feedparser` / Gemma SLM** | **100% 무료** | · Gemma SLM이 기사 95% 압축 후 전달 |
+| **3. 기업 재무제표** | **손익계산서 / FCF / 부채비율** | **yfinance / SEC EDGAR** | **100% 무료** | · FCF 흑자 1등 우량주만 조정 바닥 재매수 허용 |
+| **4. B2B CapEx & 자원** | **빅테크 CapEx / EIA / USGS** | **SEC EDGAR / EIA / USGS** | **100% 무료** | · 우량주 전방 산업 펀더멘털 건재 검증 |
+| **5. 거시/금융/기후/환율** | **GDP, PCE, VIX, DXY** | **FRED API / yfinance** | **100% 무료** | · VIX 지수 피크아웃 시 바닥 재매수 연동 |
 
 ---
 
-## 6. 🖥️ 초보자를 위한 UI/UX 화면 구성 안 (StockLatte Dashboard)
+## 5. 🖥️ 초보자를 위한 UI/UX 화면 구성 안 (StockLatte Dashboard)
 
-1. **Gemma SLM 뉴스 실시간 파이프라인 요약 레이더**
-   * `📰 실시간 뉴스 수집: 1,240개 수집 ➔ Gemma SLM이 12개 핵심 뉴스(JSON)로 95% 압축 완강!`
+1. **오늘의 우량주 조정 & 재매수 타이밍 레이더**
+   * `⚠️ 조정 위험 미리 팔기 알림 (Profit-Taking): 1개 감지 (Nvidia RSI 과열 피크아웃 징후)`
+   * `🎯 조정 완료 바닥 재매수 알림 (Dip-Buying): 2개 감지 (Tesla 50일선 지지 & 60분봉 MACD 골든크로스)`
 
-2. **오늘의 수급 & 과매도 듀얼 레이더**
-   * `🚀 추세 돌파 수급 종목 (Pass 1-A): 18개 감지`
-   * `💎 역발상 V자 과매도 대반등 종목 (Pass 1-B): 4개 감지 (Meta/TSLA/SOXL 타겟)`
-
-3. **최종 추천 종목 리포트**
-   * **1위 Micron (MU):** `Gemma 뉴스요약: Big Tech CapEx 35% 증액 호재 | 퀀트 95점 | 바닥 거래량 245% 폭증`
+2. **[NEW] 섹터 1등 우량주 타이밍 진단 리포트 (Leader Timing Report)**
+   * **Tesla (TSLA):** `조정 완료 | 50일선 지지 확인 | 일봉 투매 거래량 만개 후 60분봉 MACD 골든크로스 ➔ 재매수 추천 (목표가 재탈환)`
+   * **Nvidia (NVDA):** `조정 시작 징후 | 거래량 다이버전스 발생 | RSI 75 꺾임 ➔ 보유 수량 50% 분할 익절 권장`
 
 ---
 
-## 7. 🛠️ 단계별 개발 로드맵 (Milestones)
+## 6. 🛠️ 단계별 개발 로드맵 (Milestones)
 
-### Phase 1: Python feedparser 뉴스 RSS 수집 & Gemma SLM 요약기 구축 (1주)
-* 구글/야후 뉴스 RSS 수집 파이프라인 및 Gemma 8B SLM을 활용한 3줄 요약 & JSON 변환 Map-Reduce 로직 구현.
+### Phase 1: Peak-Out 경고 & Dip-Buying 센서 파이프라인 구축 (1주)
+* `yfinance` 기반 50/200일선 지지, 거래량 다이버전스, RSI 피크아웃, 60분봉 MACD 골든크로스 계산 로직 구현.
 
-### Phase 2: Gemini 메인 LLM 다차원 Context Matrix 연동 (2주)
-* 정제된 JSON Context Matrix를 Gemini API에 주입하여 최종 투자의사 결정 도출.
+### Phase 2: AI (Gemini) 우량주 조정 타이밍 진단 Prompt 연동 (2주)
+* FCF 흑자 1등 우량주에 대해 조정 완료 여부 및 재매수 문진 리포트를 생성하는 Prompt Engineering 연동.
 
 ### Phase 3: Web Dashboard & 실시간 알림 서비스 구축 (3~4주)
-* HTML/Vanilla CSS/JavaScript 기반 뉴스 요약 레이더 및 매수/매도 대시보드 구축.
+* HTML/Vanilla CSS/JavaScript 기반 우량주 조정-재매수 실시간 알림 대시보드 구축.
 
 ---
 
-## 8. 📚 참고 문헌 및 데이터 API (References)
+## 7. 📚 참고 문헌 및 데이터 API (References)
 
-1. **Python `feedparser`:** https://pypi.org/project/feedparser/ (Google News/Yahoo RSS 수집 100% 무료)
-2. **Gemma Open Models (Google DeepMind):** https://ai.google.dev/gemma (소형 언어 모델 SLM 뉴스 1차 요약기)
-3. **Yahoo Finance API (`yfinance`):** https://pypi.org/project/yfinance/ (주가 OHLCV, 재무제표 100% 무료)
-4. **`pandas-ta` Python Library:** https://github.com/twopirllc/pandas-ta (기술적 지표 계산)
-5. **FRED (Federal Reserve Economic Data):** https://fred.stlouisfed.org/ (거시 지표 무료 API)
+1. **Yahoo Finance API (`yfinance`):** https://pypi.org/project/yfinance/ (주봉/일봉/60분봉 OHLCV, 50/200일 MA, 거래량 무료)
+2. **`pandas-ta` Python Library:** https://github.com/twopirllc/pandas-ta (RSI, MACD, 이동평균선, 다이버전스 계산)
+3. **U.S. SEC EDGAR API:** https://www.sec.gov/edgar/sec-api-documentation (1등 우량주 FCF 및 펀더멘털 파싱)
+4. **FRED (Federal Reserve Economic Data):** https://fred.stlouisfed.org/ (VIX 지수 무료 API)

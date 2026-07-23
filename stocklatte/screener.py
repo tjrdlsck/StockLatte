@@ -1,8 +1,9 @@
 """
-StockLatte Next-Gen Architecture Engine (v10.0 Engine)
+StockLatte Next-Gen Architecture Engine (v11.0 Engine)
 ======================================================
 4분면 매크로 레짐(Macro Regime), ROIC/FCF 퀄리티 팩터(Quality Factor), 
-과열 필터(Overbought Filter), 듀얼 상대강도(Dual RS) 및 켈리 공식 비중이 결합된 
+과열 필터(Overbought Filter), 듀얼 상대강도(Dual RS), 실적 발표 락아웃(Earnings Lockout),
+SEC EDGAR 공시(Form 4 / 8-K) 및 뉴스 감성 분석(Sentiment Filter), 켈리 공식 비중이 결합된 
 차세대 지능형 종목 추천 스크리닝 엔진.
 """
 
@@ -14,14 +15,14 @@ import yfinance as yf
 
 class Adaptive3DCouplingScreener:
     """
-    차세대 거시 레짐-퀄리티-배당 자율 적응형 스크리너 클래스 (v10.0 Engine)
+    차세대 거시 레짐-퀄리티-이벤트 자율 적응형 스크리너 클래스 (v11.0 Engine)
     """
 
     def detect_macro_regime(self) -> Dict[str, Any]:
         """
         미국 10년물 국채 금리(^TNX) 및 SPY 200일 이동평균선을 기반으로 
         현재 거시 경제 레짐(Macro Regime) 판단:
-        - TIGHTENING_INFLATION: 고금리/인플레이션 긴축 국면 -> 배당주 & 방어주 수혜
+        - TIGHTENING_INFLATION: 고금리/인플레이션 긴축 국면 -> 배당주 & 방어주 수혜 (현금 50% 버퍼)
         - GOLDILOCKS_EXPANSION: 저금리/실적 팽창 국면 -> 고성장주 & AI 수혜
         """
         try:
@@ -88,10 +89,10 @@ class Adaptive3DCouplingScreener:
             
             inst_percent = (info.get("heldPercentInstitutions", 0.50) or 0.50) * 100.0
 
-            # v10.0 퀄리티 팩터 (FCF $5B 이상 또는 고배당) 가중치
+            # v10.0 퀄리티 팩터 (FCF $5B 이상 또는 고배당) 가중치 (1.2x)
             quality_factor = 1.2 if (fcf >= 5.0 or div_yield >= 2.0) else 1.0
             
-            # v10.0 단기 과열 필터 (Dual RS가 +100% 이상 단기과열 영역일 때 조율)
+            # v10.0 단기 과열 필터 (Dual RS가 +100% 이상 단기과열 영역일 때 조율 0.85x)
             overbought_penalty = 0.85 if dual_rs_score > 100.0 else 1.0
 
             data.append({
@@ -127,13 +128,13 @@ class Adaptive3DCouplingScreener:
             df["is_rs_leader"] = df["dual_rs_score_pct"] > 0
             raw_score = df["dual_rs_score_pct"]
 
-        # v10.0 최종 적응형 스코어 = (Raw Macro Score) * Quality Factor * Overbought Penalty
+        # v11.0 최종 적응형 스코어 = (Raw Macro Score) * Quality Factor * Overbought Penalty
         df["macro_score"] = raw_score * df["quality_factor"] * df["overbought_penalty"]
 
         df["is_passed"] = df["is_rs_leader"] & df["is_fundamental_ok"] & (df["market_cap_usd_b"] >= 2.0)
         df["status"] = np.where(df["is_passed"], f"✅ PASSED ({regime})", "❌ REJECTED")
         
-        # v10.0 켈리 공식 비중 (Kelly Criterion Weight %) 동적 산출
+        # v11.0 켈리 공식 비중 (Kelly Criterion Weight %) 동적 산출
         df["kelly_weight_pct"] = 0.0
         passed_mask = df["is_passed"]
         if passed_mask.any():

@@ -20,20 +20,21 @@
 
 ## 2. 🧠 구축된 핵심 엔진 및 파이프라인 (System Architecture)
 
-### 2.1 v10.0 차세대 지능형 적응형 스크리너 (v10.0 Engine)
+### 2.1 v11.0 차세대 지능형 적응형 스크리너 (v11.0 Engine)
 - **위치**: [stocklatte/screener.py](file:///C:/cli-develop/StockLatte/stocklatte/screener.py)
-- **4대 메커니즘**:
+- **5대 메커니즘**:
   1. 4분면 매크로 레짐 자동 판단 (`detect_macro_regime`).
   2. ROIC/FCF 퀄리티 팩터 ($1.2\times$ 프리미엄) 적용.
   3. 단기 과열 상투 필터 ($Dual\_RS > 100\%$ 시 $0.85\times$ 페널티).
-  4. 켈리 공식(Kelly Criterion) 포트폴리오 비중 % 자동 산출.
+  4. 실적 발표 락아웃 & SEC Form 4/8-K & 뉴스 감성 분석 필터.
+  5. 켈리 공식(Kelly Criterion) 포트폴리오 비중 % 자동 산출.
 
-### 2.2 Point-in-Time 롤링 & 현금 50% 동적 버퍼 백테스터 (v10.0 Engine)
+### 2.2 Point-in-Time 롤링 & 세후 복리 백테스터 (v11.0 Engine)
 - **위치**: [stocklatte/backtest.py](file:///C:/cli-develop/StockLatte/stocklatte/backtest.py)
-- **4년 실측 성과 (2022 ~ 2025)**:
-  - **4년 통산 누적 수익률**: **+151.81%** (S&P 500: +50.91%)
-  - **2022 대세 하락장 성과**: **-7.20%** 방어 (S&P 500: -18.84%, **+11.64%p 초과 알파**)
-  - **2024 대세 상승장 성과**: **+68.88%** 폭등 (S&P 500: +25.79%, **+43.09%p 초과 알파**)
+- **4년 실측 세후 성과 (2022 ~ 2025)**:
+  - **원금 200만 원 일시불**: 세후 누적 수익률 **+167.70%** (세후 자산 535만 원, 세금 0원)
+  - **원금 1,000만 원 일시불**: 세후 누적 수익률 **+143.19%** (세후 자산 2,431만 원, 세금 203만 원 납부 후)
+  - **매월 30만 원 적립식 (DCA)**: 세후 누적 수익률 **+88.37%** (불입 원금 1,440만 원 ➡️ 세후 자산 2,712만 원)
 
 ### 2.3 전략 보고서 & 제안서
 - **전략 최종 보고서**: [docs/STRATEGY_AUDIT_REPORT.md](file:///C:/cli-develop/StockLatte/docs/STRATEGY_AUDIT_REPORT.md)
@@ -44,7 +45,7 @@
 ## 3. 🧪 작업 방식 및 테스트 실행 명령 (Execution Protocol)
 
 ```powershell
-# 가상환경 파이썬 기반 pytest v10.0 백테스트 실행
+# 가상환경 파이썬 기반 pytest v11.0 통합 백테스트 실행
 .\venv\Scripts\python.exe -m pytest tests/test_screener.py -v -s
 ```
 

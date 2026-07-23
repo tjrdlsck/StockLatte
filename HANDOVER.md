@@ -11,8 +11,8 @@
 ## ⚡ 1줄 요약 복원 패키지
 
 - **프로젝트**: StockLatte Auto-Pilot (미국 주식 자동 모니터링 & 추천 시스템)
-- **핵심 알고리즘 (v10.0 Next-Gen Engine)**: 4분면 매크로 레짐, ROIC/FCF 퀄리티 팩터(1.2x), 단기 과열 필터(0.85x), 듀얼 RS, 켈리 비중 동적 산출 엔진 ([stocklatte/screener.py](file:///C:/cli-develop/StockLatte/stocklatte/screener.py))
-- **백테스트 엔진 (v10.0 Engine)**: Look-ahead Bias 100% 차단 Point-in-Time 분기 롤링 & 긴축 레짐 현금 50% 버퍼 엔진 (4년 연속 통산 +151.81%, 2022 하락장 -7.20% 방어 실증 완료) ([stocklatte/backtest.py](file:///C:/cli-develop/StockLatte/stocklatte/backtest.py))
+- **핵심 알고리즘 (v11.0 Engine)**: 4분면 매크로 레짐, ROIC/FCF 퀄리티 팩터(1.2x), 단기 과열 필터(0.85x), 듀얼 RS, 실적 발표 락아웃 & D-2일 50% 디리스킹, SEC Form 4/8-K & 뉴스 감성 분석 필터, 켈리 비중 동적 산출 엔진 ([stocklatte/screener.py](file:///C:/cli-develop/StockLatte/stocklatte/screener.py))
+- **백테스트 엔진 (v11.0 Engine)**: Look-ahead Bias 100% 차단 Point-in-Time 분기 롤링, 긴축 레짐 현금 50% 버퍼, 한국투자증권 수수료/환전비용(연 -0.80%p) & 22% 해외주식 양도소득세 세후 복리 백테스터 ([stocklatte/backtest.py](file:///C:/cli-develop/StockLatte/stocklatte/backtest.py))
 - **사용자 규칙**:
   1. 한국어 + CS/AI 교수 페르소나 (체계적, 전문적, 기술 용어 영문 괄호 병기, LaTeX 수식 사용).
   2. **브랜치 전략 무시** (사용자 지시대로 현재 브랜치에서 다이렉트 수정 및 커밋/푸시).

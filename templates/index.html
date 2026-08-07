@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockLatte ☕📈 - 중장기 우량주 스마트 리밸런싱 대시보드</title>
+    <meta name="description" content="미국 주식 현재 평가 금액(Market Value) 기준 비중 산출, 비중 쏠림 감지 및 Sell High, Buy Low 스마트 자동 리밸런싱 시스템">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-logo">☕📈</div>
+                <div class="brand-text">
+                    <h1>StockLatte</h1>
+                    <p class="subtitle">중장기 우량주 자산배분 & 스마트 리밸런싱 대시보드</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="btn-reset-data" class="btn btn-secondary">
+                    <span class="icon">🔄</span> 예시 시나리오 리셋
+                </button>
+                <button id="btn-open-modal" class="btn btn-primary">
+                    <span class="icon">➕</span> 포지션 편집 / 추가
+                </button>
+            </div>
+        </header>
+
+        <!-- Summary Banner / Alert Cards -->
+        <section class="summary-section">
+            <div class="summary-card glass-card">
+                <div class="card-label">총 평가 자산 (Total Market Value)</div>
+                <div id="total-portfolio-value" class="card-value">$0.00</div>
+                <div class="card-subtext">주식 평가액 + 보유 현금</div>
+            </div>
+
+            <div class="summary-card glass-card">
+                <div class="card-label">보유 현금 (Cash Balance)</div>
+                <div id="total-cash-value" class="card-value">$0.00</div>
+                <div class="card-subtext">리밸런싱 재투자가능 자금</div>
+            </div>
+
+            <div id="alert-card-container" class="summary-card glass-card alert-card">
+                <div class="card-label">⚠️ 비중 쏠림 경보 (Overweight Shift)</div>
+                <div id="alert-status-text" class="card-value alert-text">감지 중...</div>
+                <div id="alert-subtext" class="card-subtext">포트폴리오 리스크 감지 센서</div>
+            </div>
+        </section>
+
+        <!-- Main Dashboard Grid -->
+        <main class="dashboard-grid">
+            <!-- Left Column: Current Portfolio & Weight Breakdown -->
+            <section class="grid-card glass-card">
+                <div class="card-header">
+                    <h2>📊 포트폴리오 종목별 평가 금액 및 비중</h2>
+                    <span class="badge badge-info">Market Value Based</span>
+                </div>
+                <div id="positions-list" class="positions-list">
+                    <!-- Dynamic rendering via JS -->
+                </div>
+            </section>
+
+            <!-- Right Column: Smart Rebalancing Guide -->
+            <section class="grid-card glass-card">
+                <div class="card-header">
+                    <h2>🤖 1초 자동 리밸런싱 가이드</h2>
+                    <span class="badge badge-success">Sell High, Buy Low</span>
+                </div>
+                
+                <div id="rebalance-guide-container" class="rebalance-guide-container">
+                    <!-- Dynamic rendering via JS -->
+                </div>
+
+                <!-- LLM JSON Context Card -->
+                <div class="llm-json-box">
+                    <div class="json-header">
+                        <h3>🤖 LLM 주입용 리밸런싱 Prompt JSON</h3>
+                        <button id="btn-copy-json" class="btn btn-sm btn-outline">
+                            <span class="icon">📋</span> JSON 복사
+                        </button>
+                    </div>
+                    <pre><code id="json-output-content">JSON 생성 중...</code></pre>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Edit Portfolio Modal -->
+    <div id="edit-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3>✏️ 포트폴리오 포지션 편집 및 목표 비중 설정</h3>
+                <button id="btn-close-modal" class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="portfolio-form">
+                    <div class="form-group">
+                        <label for="input-cash">보유 현금 ($)</label>
+                        <input type="number" id="input-cash" step="0.01" value="0.00" required>
+                    </div>
+
+                    <h4 class="form-section-title">종목 목록</h4>
+                    <div id="modal-positions-rows">
+                        <!-- Dynamic position rows -->
+                    </div>
+
+                    <button type="button" id="btn-add-position-row" class="btn btn-sm btn-secondary" style="margin-top: 10px;">
+                        ➕ 종목 추가
+                    </button>
+
+                    <div class="modal-footer">
+                        <button type="button" id="btn-cancel-modal" class="btn btn-secondary">취소</button>
+                        <button type="submit" class="btn btn-primary">저장 및 리밸런싱 재계산</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

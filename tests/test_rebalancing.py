@@ -112,3 +112,49 @@ def test_stock_data_provider_mock():
     prices = provider.fetch_current_prices(["NVDA", "MSFT"])
     assert prices["NVDA"] == 150.0
     assert prices["MSFT"] == 350.0
+
+
+def test_new_ticker_buy_action():
+    """피드백 7번 검증: 현재 미보유 신규 종목(target_weights에만 지정)에 대한 BUY 주문 정상 생성 여부 테스트"""
+    aapl = Position(ticker="AAPL", quantity=100, current_price=100.0) # $10,000 (100%)
+    portfolio = Portfolio(
+        positions=[aapl],
+        cash=0.0,
+        target_weights={"AAPL": 60.0, "NVDA": 40.0} # NVDA는 현재 보유 0개
+    )
+    engine = MarketValueRebalancingEngine(rebalance_band_pct=0.5)
+    result = engine.calculate_rebalance(portfolio)
+    
+    actions_map = {a.ticker: a for a in result.actions}
+    assert "NVDA" in actions_map
+    assert actions_map["NVDA"].action_type == "BUY"
+    assert actions_map["NVDA"].amount == 4000.0 # 40% of 10,000
+
+
+def test_rebalance_band_filter():
+    """피드백 9번 검증: 미세 비중 차이(허용 밴드 이하)에 대해 거래 비용 절감을 위해 HOLD 처리하는지 테스트"""
+    aapl = Position(ticker="AAPL", quantity=50, current_price=100.0) # $5,000 (50.5%)
+    msft = Position(ticker="MSFT", quantity=49, current_price=100.0) # $4,900 (49.5%)
+    portfolio = Portfolio(
+        positions=[aapl, msft],
+        cash=0.0,
+        target_weights={"AAPL": 50.0, "MSFT": 50.0}
+    )
+    # 0.5% 차이는 rebalance_band_pct = 1.0%p 설정 시 거래 생성되지 않음
+    engine = MarketValueRebalancingEngine(rebalance_band_pct=1.0)
+    result = engine.calculate_rebalance(portfolio)
+    assert len(result.actions) == 0
+
+
+def test_target_weight_validation():
+    """피드백 7번 검증: 목표 비중 합계 100% 초과 시 예외 발생 테스트"""
+    aapl = Position(ticker="AAPL", quantity=10, current_price=100.0)
+    portfolio = Portfolio(
+        positions=[aapl],
+        cash=0.0,
+        target_weights={"AAPL": 70.0, "MSFT": 50.0} # 합계 120%
+    )
+    engine = MarketValueRebalancingEngine()
+    with pytest.raises(ValueError, match="100%를 초과"):
+        engine.calculate_rebalance(portfolio)
+

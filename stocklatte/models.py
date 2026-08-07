@@ -83,45 +83,59 @@ class RebalanceResult:
     target_weights: Dict[str, float]
     actions: List[RebalanceAction]
     overweight_alerts: List[Dict[str, float]]
+    all_positions: Optional[List[Position]] = None
 
     def to_llm_json(self) -> str:
-        """LLM 주입용 리밸런싱 산출 결과 JSON 포맷 변환"""
-        sell_actions = [a for a in self.actions if a.action_type == "SELL"]
-        buy_actions = [a for a in self.actions if a.action_type == "BUY"]
+        """LLM 주입용 리밸런싱 산출 결과 JSON 포맷 변환 (전체 포지션 및 경고 분리)"""
+        trim_actions = [a for a in self.actions if a.action_type == "SELL"]
+        add_actions = [a for a in self.actions if a.action_type == "BUY"]
 
         step1_desc = []
-        for act in sell_actions:
+        for act in trim_actions:
             step1_desc.append(
-                f"{act.ticker} 주식 중 ${act.amount:,.2f}치(약 {act.shares:.1f}주)를 차익 실현하여 "
-                f"{act.ticker} 비중을 {act.new_weight:.1f}%로 맞추십시오."
+                f"{act.ticker} 주식 중 ${act.amount:,.2f}치(약 {act.shares:.1f}주)를 비중 조절 매도하여 "
+                f"{act.ticker} 비중을 {act.new_weight:.1f}%로 조정하십시오."
             )
 
         step2_desc = []
-        for act in buy_actions:
+        for act in add_actions:
             step2_desc.append(
                 f"{act.ticker} ${act.amount:,.2f}치 추가 매수"
             )
 
-        step1_str = " 및 ".join(step1_desc) if step1_desc else "매도 대상 없음"
-        step2_str = "차익 실현 현금으로 " + ", ".join(step2_desc) + "하여 목표 비중을 완성하십시오." if step2_desc else "매수 대상 없음"
+        step1_str = " 및 ".join(step1_desc) if step1_desc else "비중 매도 조치 대상 없음"
+        step2_str = "비중 조절 현금으로 " + ", ".join(step2_desc) + "하여 목표 비중을 완충하십시오." if step2_desc else "추가 매수 조치 대상 없음"
+
+        positions_list = []
+        if self.all_positions:
+            tot = self.total_portfolio_value
+            for pos in self.all_positions:
+                cur_w = round((pos.market_value / tot * 100.0), 1) if tot > 0 else 0.0
+                positions_list.append({
+                    "ticker": pos.ticker,
+                    "current_market_value": f"${pos.market_value:,.2f}",
+                    "current_weight": f"{cur_w:.1f}%"
+                })
+        else:
+            for alert in self.overweight_alerts:
+                positions_list.append({
+                    "ticker": alert["ticker"],
+                    "current_market_value": f"${alert['market_value']:,.2f}",
+                    "current_weight": f"{alert['current_weight']:.1f}%"
+                })
 
         output_data = {
             "market_value_rebalancing_input": {
                 "total_portfolio_value": f"${self.total_portfolio_value:,.2f}",
                 "target_weights": {k: f"{v:.1f}%" for k, v in self.target_weights.items()},
-                "current_positions": [
-                    {
-                        "ticker": alert["ticker"],
-                        "current_market_value": f"${alert['market_value']:,.2f}",
-                        "current_weight": f"{alert['current_weight']:.1f}%" + (" (과도 쏠림 ⚠️)" if alert in self.overweight_alerts else "")
-                    }
-                    for alert in self.overweight_alerts
-                ]
+                "current_positions": positions_list,
+                "overweight_alerts": self.overweight_alerts
             },
             "llm_rebalancing_execution_plan": {
                 "action": "EXECUTE_MARKET_VALUE_REBALANCING",
-                "step1_sell_high": step1_str,
-                "step2_buy_low": step2_str
+                "step1_trim_overweight": step1_str,
+                "step2_add_underweight": step2_str
             }
         }
         return json.dumps(output_data, ensure_ascii=False, indent=2)
+

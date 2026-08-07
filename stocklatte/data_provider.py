@@ -30,16 +30,17 @@ class StockDataProvider:
                 stock = yf.Ticker(ticker)
                 # fast_info 또는 history를 통한 현재가 파싱
                 info_price = getattr(stock.fast_info, 'last_price', None)
-                if info_price is not None:
+                if info_price is not None and float(info_price) > 0:
                     prices[ticker] = round(float(info_price), 2)
                 else:
                     hist = stock.history(period="1d")
-                    if not hist.empty:
+                    if not hist.empty and float(hist['Close'].iloc[-1]) > 0:
                         prices[ticker] = round(float(hist['Close'].iloc[-1]), 2)
                     else:
-                        prices[ticker] = 0.0
+                        prices[ticker] = None
             except Exception:
-                # 오프라인 또는 오류 발생 시 0.0 처리
-                prices[ticker] = 0.0
+                # 오프라인 또는 오류 발생 시 None 처리하여 데이터 수집 실패 명시
+                prices[ticker] = None
 
         return prices
+

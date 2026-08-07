@@ -51,6 +51,40 @@ class TestScreenerCoupledBacktest(unittest.TestCase):
         
         print(f"[PASS] test_screener_coupled_pit_backtest_execution: 2024 Total Return={results['total_portfolio_return_pct']}%, Benchmark={results['total_benchmark_return_pct']}%")
 
+    def test_diversified_universe_filtering_and_backtest(self):
+        """
+        상승주뿐만 아니라 하락주(INTC, PFE, NKE, BA, PYPL 등) 및 방어주(KO, JNJ, PG 등)가 
+        포함된 다양한 18개 종목 유니버스에서 스크리너가 부실/하락 종목을 정확히 거러내고(REJECTED) 
+        우량 종목(PASSED)만 선택하는지 검증
+        """
+        diversified_universe = [
+            # 빅테크/우상향주
+            "NVDA", "META", "AMZN", "LLY", "COST",
+            # 2024년 하락/실적부진주
+            "INTC", "PFE", "NKE", "BA", "PYPL", "DIS",
+            # 방어주/가치주
+            "KO", "JNJ", "PG", "WMT", "XOM",
+            # 변동성주
+            "TSLA", "AMD"
+        ]
+        
+        screener = Adaptive3DCouplingScreener()
+        df_screened = screener.run_adaptive_screening(diversified_universe, as_of_date="2024-01-01")
+        
+        passed_tickers = df_screened[df_screened["is_passed"]]["ticker"].tolist()
+        rejected_tickers = df_screened[~df_screened["is_passed"]]["ticker"].tolist()
+        
+        print(f"\n[DIVERSIFIED TEST 2024-01-01]")
+        print(f"Total Universe Count: {len(diversified_universe)}")
+        print(f"Passed Tickers ({len(passed_tickers)}): {passed_tickers}")
+        print(f"Rejected Tickers ({len(rejected_tickers)}): {rejected_tickers}")
+        
+        pit_backtester = PointInTimeBacktester(ticker_universe=diversified_universe)
+        results = pit_backtester.run_screener_coupled_pit_backtest(years=[2024], use_score_weights=True)
+        
+        print(f"Diversified Backtest 2024 Return: Portfolio={results['total_portfolio_return_pct']}%, Benchmark={results['total_benchmark_return_pct']}%")
+        self.assertGreater(len(rejected_tickers), 0, "하락/부실 종목이 최소 1개 이상 거러져야 합니다.")
+
 
 if __name__ == "__main__":
     unittest.main()
